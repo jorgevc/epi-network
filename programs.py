@@ -24,6 +24,7 @@ from Simulation import simulation
 from modelos import PLOSModel
 from MobilityNetwork import MobilityNetwork
 from control_protocol import controlProtocol
+from SimulationsEnsemble import simulationsEnsemble
 
 def Homogeneus_Simple_Control():
 	#parameteres
@@ -65,6 +66,8 @@ def Homogeneus_Simple_Control():
 	sim.set_control_protocol(ControlSimple)
 	sim.run() #Se corre la simulacion
 	sim.plot_all() # Se grafica I para la zona 0.
+	sim.plot_total_infected()
+	return sim
 	
 def Homogeneus_Without_Control():
 	#parameteres
@@ -99,6 +102,8 @@ def Homogeneus_Without_Control():
 	sim.set_simulation_time(80) #How many "days" to simulate 
 	sim.run() #Se corre la simulacion
 	sim.plot_all() # Se grafica I para la zona 0.
+	sim.plot_total_infected()
+	return sim
 	
 def Without_Control():
 	#parameteres
@@ -138,8 +143,52 @@ def Without_Control():
 	sim.set_simulation_time(80) #How many "days" to simulate 
 	sim.run() #Se corre la simulacion
 	sim.plot_all() # Se grafica I para la zona 0.
+	return sim
+	
+def simple_simulations_ensemble():
+	#numero de simulaciones en el ensemble
+	number_of_simulations = 10
+	
+	#parameteres
+	n = 6 #numero de parches
+	p = 0.5 # parametro de la red binomial
+	min_residential = 0.8 # diagonal de la matriz de mobilidad mayor a este numero
+	#vector de parametros para una zona
+	param = [0]*5
+	param[0] = beta1 = 0.67
+	param[1] = gama1 = 1./7.
+	param[2] = alfa1 =5 
+	param[3] = c1 =1000 
+	param[4] = mu1 = 1./8.
+	#initial conditions para una zona
+	y = [0]*5
+	S1 = y[0] = 1500.
+	I1 = y[1] = 0.0 
+	R1 = y[2] = 0.0
+	Sv1 = y[3] = 200 
+	Iv1 = y[4] = 0.0
+	
+	sim = simulation() #se crea objeto simulacion
+	sim.add_many_patches_parameters(n,param)  # se agregan n zonas con parametros dados en param
+	sim.set_initial_conditions_all_patches(y) # se agregan las condiciones iniciales para todos las zonas
+	y[4]=y[4]+1. # Se agrega 1 infectado mosquito a las condiciones iniciales
+	sim.set_initial_conditions_patch(1,y) #Se establece esta condicion inicial en la zona 1
+	sim.set_model(PLOSModel) #Se establece el modelo usado en PLOS como modelo para hacer la simulacion
+	
+	P=MobilityNetwork() #Se crea la red de mobilidad
+	
+	ensemble = simulationsEnsemble() # se crea el objeto ensamble_de_simulaciones
+	for i in range(number_of_simulations) :
+		P.binomial(n,p,min_residential) #para cada simulacion se genera una nueva red binomial
+		sim.set_conectivity_network(P)
+		ensemble.add_simulation(sim)
+
+	ensemble.run_all_simulations() # run all simulations in the ensemble
+	
+	ensemble.plot_infected_average() 
 
 if __name__ == '__main__':
-	Homogeneus_Simple_Control()
+	#Homogeneus_Simple_Control()
 	#Homogeneus_Without_Control()
 	#Without_Control()
+	simple_simulations_ensemble()

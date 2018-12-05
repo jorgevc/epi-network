@@ -42,6 +42,8 @@ class simulation:
 		self.evolution = []
 		self.control_protocol = noControl()
 		self.simulation_time = 100
+		self.total_infected = None
+		self.runned_times = 0
 		
 	def add_one_patch_parameters(self,parameters):
 		self.parameters.append(list(parameters))
@@ -53,7 +55,7 @@ class simulation:
 			self.add_one_patch_parameters(parameters)
 			
 	def set_initial_conditions_patch(self,i,Initial):
-		self.node[i] = list(Initial)
+		self.node[i] = np.array(Initial)
 		
 	def set_initial_conditions_all_patches(self,Initial):
 		for i in range(self.No_patches):
@@ -81,6 +83,8 @@ class simulation:
 		initial = np.array(self.node).flatten()
 		solution = odeint(system,initial,self.time)
 		self.evolution = [[solution[:,node*5+column] for column in range(5)] for node in range(n)]
+		self.calculate_total_infected()
+		self.runned_times += 1
 		
 	def set_control_protocol(self,control_protocol):
 		self.control_protocol = copy.deepcopy(control_protocol)
@@ -99,6 +103,20 @@ class simulation:
 		for i in range(self.No_patches) :
 			plt.plot(self.time,self.evolution[i][1][:])
 		plt.show()
+	
+	def calculate_total_infected(self):
+		self.total_infected = self.evolution[0][1][:].copy()
+		for i in range(1,self.No_patches):
+			self.total_infected += self.evolution[i][1][:]
+	
+	def plot_total_infected(self):
+		if (self.total_infected is None ):
+			self.calculate_total_infected()
+		plt.figure()
+		plt.xlabel('Time')
+		plt.ylabel('Total Infected')
+		plt.plot(self.time,self.total_infected)
+		plt.show() 
 
 if __name__ == '__main__':
 	#parameteres
@@ -127,7 +145,7 @@ if __name__ == '__main__':
 	sim = simulation() #se crea objeto simulacion
 	sim.add_many_patches_parameters(n,param)  # se agregan n zonas con parametros dados en param
 	sim.set_conectivity_network(P) # se agrega la red de conectividad P
-	sim.set_initial_conditions_all_patches(y) # se agregan las condiciones inicials para todos las zonas
+	sim.set_initial_conditions_all_patches(y) # se agregan las condiciones iniciales para todos las zonas
 	y[4]=y[4]+1. # Se agrega 1 infectado mosquito a las condiciones iniciales
 	sim.set_initial_conditions_patch(1,y) #Se establece esta condicion inicial en la zona 1
 	sim.set_model(PLOSModel) #Se establece el modelo usado en PLOS como modelo para hacer la simulacion

@@ -111,6 +111,7 @@ class controlProtocol:
 		plt.ylabel('TR_i')
 		plt.plot(self.time,self.evolution[i][1][:])
 		plt.show()
+		
 
 class noControl:
 	def __init__(self,default = 0):

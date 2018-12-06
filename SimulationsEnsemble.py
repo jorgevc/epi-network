@@ -3,6 +3,7 @@ import copy
 from modelos import PLOSModel
 from MobilityNetwork import MobilityNetwork
 import matplotlib.pyplot as plt
+import sys
 
 class simulationsEnsemble:
 	
@@ -37,6 +38,40 @@ class simulationsEnsemble:
 			infected_average += self.simulations[i].total_infected
 		self.infected_average = infected_average/(n)
 		return infected_average.copy()
+		
+	def MPI_run_all(self):
+		import  mpi4py
+		from mpi4py import MPI
+		
+		comm = MPI.COMM_WORLD
+		size = comm.Get_size()
+		rank = comm.Get_rank()
+		
+		number_process_simulations = [int(self.number_of_simulations/size)]*size
+		number_process_simulations[0] += self.number_of_simulations % size
+		process_offset = [0]*size
+		process_simulations = []
+		
+		for i in range(1,size):
+			process_offset[i]=process_offset[i-1] + number_process_simulations[i-1]
+		
+		for i in range(number_process_simulations[rank]):
+			n=process_offset[rank] + i
+			self.run_simulation(n)
+			process_simulations.append(self.simulations[n])
+		
+		comm.barrier()
+		recvbuf = comm.gather(process_simulations, root=0)
+		echa=self.simulations[7].runned_times
+		if rank==0:
+			self.simulations = [item for sublist in recvbuf for item in sublist]
+			echa=self.simulations[7].runned_times
+			self.average_infected()
+			MPI.Finalize()
+		else:
+			MPI.Finalize()
+			exit()
+
 		
 	def plot_infected_average(self):
 		if (self.infected_average is None ):

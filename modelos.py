@@ -62,8 +62,8 @@ def PLOSModel(yv,t,param,p,n,control):
 
    for i in range (0,n):
       control_params = control.get_control(i)
-      beta[i] = param[i][0] #- control_params[0]
-      gamma[i] = param[i][1] + control_params[1]
+      beta[i] = param[i][0] - control_params[0]
+      gamma[i] = param[i][1] # + control_params[1]
       alfa[i] = param[i][2]
       c[i] = param[i][3]
       mu[i] = param[i][4]
@@ -86,6 +86,8 @@ def PLOSModel(yv,t,param,p,n,control):
           b = np.concatenate((b,a),axis=0) 
        
    return b
+
+
 
 def NPatch2(yv,param,p,n):
    y = yv.reshape(n,5) 

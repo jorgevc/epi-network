@@ -20,6 +20,7 @@
 #  
 
 import numpy as np
+import random as rnd
 
 class controlProtocol:
 	def __init__(self,params,P_network):
@@ -49,9 +50,9 @@ class controlProtocol:
 		TRh = self.TRh[-1][1]
 		TRh_max = max(TRh)
 		max_transmition_patch = TRh.index(TRh_max)
-		if( TRh_max > 2.):
-			self.control = [[0.,0.]] * self.number_of_patches
-			self.control[max_transmition_patch] = [0.2,0.2]
+		#if( TRh_max > 2.):
+		self.control = [[0.,0.]] * self.number_of_patches
+		self.control[max_transmition_patch] = [0.2,0.2]
 			
 	def calculate_control(self,t):
 		if(t-self.last_control_time > self.control_interval):
@@ -128,3 +129,10 @@ class noControl:
 		
 	def get_control(self,i):
 		return self.default_control
+
+class randomControl(controlProtocol):
+	
+	def recalculate_control(self):
+		random_patch = rnd.randint(0,self.number_of_patches-1)
+		self.control = [[0.,0.]] * self.number_of_patches
+		self.control[random_patch] = [0.2,0.2] 

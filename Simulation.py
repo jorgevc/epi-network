@@ -19,6 +19,7 @@
 #  
 #  
 from scipy.integrate import odeint
+from scipy.integrate import solve_ivp
 import numpy as np
 import matplotlib.pyplot as plt
 from modelos import PLOSModel
@@ -43,6 +44,7 @@ class simulation:
 		self.control_protocol = noControl()
 		self.simulation_time = 100
 		self.total_infected = None
+		self.total_recovered = None
 		self.runned_times = 0
 		
 	def add_one_patch_parameters(self,parameters):
@@ -77,13 +79,16 @@ class simulation:
 		parameters = self.parameters
 		self.time = np.linspace(0.0,self.simulation_time,self.simulation_time*10)
 
-		def system(estate,t):
+		#def system(estate,t):
+		def system(t,estate):
 			return self.model(estate,t,parameters,p,n,control)
 
 		initial = np.array(self.node).flatten()
-		solution = odeint(system,initial,self.time)
+		#solution = odeint(system,initial,self.time)
+		solution = np.array(solve_ivp(system, [min(self.time), max(self.time)], initial, t_eval=self.time).y).T
 		self.evolution = [[solution[:,node*5+column] for column in range(5)] for node in range(n)]
 		self.calculate_total_infected()
+		self.calculate_total_recovered()
 		self.runned_times += 1
 		
 	def set_control_protocol(self,control_protocol):
@@ -105,9 +110,14 @@ class simulation:
 		plt.show()
 	
 	def calculate_total_infected(self):
-		self.total_infected = self.evolution[0][1][:].copy()
+		self.total_infected = self.evolution[0][1][:].copy()  #asumed 2nd equation is infected
 		for i in range(1,self.No_patches):
 			self.total_infected += self.evolution[i][1][:]
+			
+	def calculate_total_recovered(self):
+		self.total_recovered = self.evolution[0][2][:].copy()  #asumed 3er ecuation is recovered
+		for i in range(1,self.No_patches):
+			self.total_recovered += self.evolution[i][2][:]
 	
 	def plot_total_infected(self):
 		if (self.total_infected is None ):
@@ -115,8 +125,19 @@ class simulation:
 		plt.figure()
 		plt.xlabel('Time')
 		plt.ylabel('Total Infected')
-		plt.plot(self.time,self.total_infected)
-		plt.show() 
+		line = copy.copy(plt.plot(self.time,self.total_infected))
+		plt.show()
+		return line
+		
+	def plot_total_recovered(self):
+		if (self.total_recovered is None ):
+			self.calculate_total_recovered()
+		plt.figure()
+		plt.xlabel('Time')
+		plt.ylabel('Total Recovered')
+		line = copy.copy(plt.plot(self.time,self.total_recovered))
+		plt.show()
+		return line 
 
 if __name__ == '__main__':
 	#parameteres
@@ -156,4 +177,8 @@ if __name__ == '__main__':
 	
 	sim.set_control_protocol(ControlSimple)
 	sim.run() #Se corre la simulacion
-	sim.plot_all() # Se grafica I para la zona 0.
+	
+	sim.plot_total_infected()
+	sim.plot_total_recovered()
+	
+	#sim.plot_all() # Se grafica I para la zona 0.

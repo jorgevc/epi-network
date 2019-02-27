@@ -3,13 +3,14 @@ import copy
 from modelos import PLOSModel
 from MobilityNetwork import MobilityNetwork
 import matplotlib.pyplot as plt
-import sys
+import matplotlib.lines as ml
 
 class simulationsEnsemble:
 	
 	def __init__(self):
 		self.simulations = []
 		self.infected_average = None
+		self.recoverd_average = None
 		self.number_of_simulations = 0
 		
 	def add_simulation(self, simulation):
@@ -23,6 +24,7 @@ class simulationsEnsemble:
 		for i in range(self.number_of_simulations):
 			self.run_simulation(i)
 		self.average_infected()
+		self.average_recovered()
 			
 	def average_infected(self):
 		n=self.number_of_simulations
@@ -38,6 +40,21 @@ class simulationsEnsemble:
 			infected_average += self.simulations[i].total_infected
 		self.infected_average = infected_average/(n)
 		return infected_average.copy()
+		
+	def average_recovered(self):
+		n=self.number_of_simulations
+		if (n>0 and self.simulations[0].runned_times == 0):
+			self.run_simulation(0)
+		elif (n==0):
+			print("You have to add some simulations...")
+			exit()
+		recovered_average = self.simulations[0].total_recovered.copy()
+		for i in range(1,n):
+			if (self.simulations[i].runned_times == 0):
+				self.run_simulation(i)
+			recovered_average += self.simulations[i].total_recovered
+		self.recovered_average = recovered_average/(n)
+		return recovered_average.copy()
 		
 	def MPI_run_all(self):
 		import  mpi4py
@@ -62,27 +79,45 @@ class simulationsEnsemble:
 		
 		comm.barrier()
 		recvbuf = comm.gather(process_simulations, root=0)
-		echa=self.simulations[7].runned_times
 		if rank==0:
 			self.simulations = [item for sublist in recvbuf for item in sublist]
-			echa=self.simulations[7].runned_times
 			self.average_infected()
+			self.average_recovered()
 			MPI.Finalize()
 		else:
 			MPI.Finalize()
 			exit()
 
 		
-	def plot_infected_average(self):
+	def plot_infected_average(self, axes=None):
 		if (self.infected_average is None ):
 			self.average_infected()
 		I_average = self.infected_average
 		time = self.simulations[0].time
-		plt.figure()
-		plt.xlabel('Time')
-		plt.ylabel('Infected (simulation average)')
-		plt.plot(time,I_average)
-		plt.show()  
+		if (axes is None):
+			fig, ax = plt.subplots()
+		else:
+			ax = axes
+		ax.set_xlabel('Time')
+		ax.set_ylabel('Infected (simulation average)')
+		ax.plot(time,I_average)
+		#plt.show()
+		return ax
+		
+	def plot_recovered_average(self, axes=None):
+		if (self.recovered_average is None ):
+			self.average_recovered()
+		R_average = self.recovered_average
+		time = self.simulations[0].time
+		if (axes is None):
+			fig, ax = plt.subplots()
+		else:
+			ax = axes
+		ax.set_xlabel('Time')
+		ax.set_ylabel('Recovered (simulation average)')
+		ax.plot(time,R_average)
+		#plt.show()
+		return ax
 
 if __name__ == '__main__':
 	#numero de simulaciones en el ensemble
@@ -124,4 +159,7 @@ if __name__ == '__main__':
 
 	ensemble.run_all_simulations() # run all simulations in the ensemble
 	
-	ensemble.plot_infected_average() 
+	ensemble.plot_infected_average()
+	ensemble.plot_recovered_average()
+	plt.show()
+	

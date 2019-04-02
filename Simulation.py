@@ -29,12 +29,48 @@ from control_protocol import noControl
 import copy
 
 class simulation:
+	 """Class simulation represents a single simulation of a epidemic
+
+    Attributes
+    ----------
+    The following attributes need to be set in order to run the simulation:
+        No_patches : int
+          Number of patches (zones) in the network.
+        parameters : list[list[float]]
+          List of the parameter's list for each patch
+        model : function object
+          function representing the ODE of the dinamical system
+        P : 2dim numpy array
+          Conectivity matrix of the network
+        node : list of numpy arrays 
+          List of initial conditions of the patches(nodes).
+        simulation_time : int
+          final time in the corresponding units of the model parameters of the simulation
+        control_protocol : controlProtocol object
+          object representing the control protocol to be implemented (Default non control)
+    
+    The following attributes are calculated and set after the simulation is runned with the 'run' procedure:
+        time : numpy.array
+          vector of times where state of the system was computed 
+        evolution : 3 dimentional numpy array
+          numpy array[node][equation][step time] giving the estate of the variable (equation) at a time step
+        total_infected : numpy.array[i])
+          Total infected of the simulation at time steep i (sum of infected of all patches) 2nd ecuation is assumed to be infected
+        total_recovered : numpy.array[i]
+          Total recovered of the simulation at time steep i (sum of recovered of all patches) 3rd equation is assumed to be recovered
+        runned_times : int
+          Number of times the simulation has been run.
+        
+    Methods
+    -------
+    add_one_patch_parameters(parameters):
+       Adds one patch (sector) to the simulation with list of parameters given as the argument
+    """
+
 	
 	def __init__(self):
 		#parameteres
 		self.No_patches = 0 #numero de parches
-		self.p = 0.
-		self.min_residential_fraction = 1.
 		self.parameters = []
 		self.node = []
 		self.time = []
@@ -48,15 +84,58 @@ class simulation:
 		self.runned_times = 0
 		
 	def add_one_patch_parameters(self,parameters):
+		"""Adds one patch (sector) to the simulation with list of parameters given as the argument
+		
+		Parameters
+		----------
+		parameters : list or 1dim numpy array
+		   list of patch parameters
+		
+		Returns
+		-------
+		none
+		
+		"""
+		
 		self.parameters.append(list(parameters))
 		self.node.append([])
 		self.No_patches +=1 
 		
 	def add_many_patches_parameters(self,No_patches, parameters):
+		"""Adds many similar patches to the simulation
+		
+		Parameters
+		----------
+		No_parches : int
+		   number of patches to be added to the simulation
+		parameters : list of 1dim numpy array
+		   list of parameters of the patch. All patches will have this same parameters
+		
+		Returns
+		-------
+		none
+		
+		"""
+		
 		for i in range(No_patches):
 			self.add_one_patch_parameters(parameters)
 			
 	def set_initial_conditions_patch(self,i,Initial):
+		"""Sets the initial conditions of a specific patch 
+		
+		Parameters
+		----------
+		i : int
+			Number of patch
+		Initial : list or numpy array
+			list of values for the initial conditions of a single patch
+			
+		Returns
+		-------
+		none
+		
+		"""
+		
 		self.node[i] = np.array(Initial)
 		
 	def set_initial_conditions_all_patches(self,Initial):

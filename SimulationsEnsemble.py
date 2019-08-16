@@ -5,6 +5,7 @@ from MobilityNetwork import MobilityNetwork
 import matplotlib.pyplot as plt
 import matplotlib.lines as ml
 
+
 class simulationsEnsemble:
 	
 	def __init__(self):
@@ -40,6 +41,21 @@ class simulationsEnsemble:
 			infected_average += self.simulations[i].total_infected
 		self.infected_average = infected_average/(n)
 		return infected_average.copy()
+		
+	def average_suseptible(self):
+		n=self.number_of_simulations
+		if (n>0 and self.simulations[0].runned_times == 0):
+			self.run_simulation(0)
+		elif (n==0):
+			print("You have to add some simulations...")
+			exit()
+		susceptible_average = self.simulations[0].total_susceptible.copy()
+		for i in range(1,n):
+			if (self.simulations[i].runned_times == 0):
+				self.run_simulation(i)
+			susceptible_average += self.simulations[i].total_susceptible
+		self.susceptible_average = susceptible_average/(n)
+		return susceptible_average.copy()
 		
 	def average_recovered(self):
 		n=self.number_of_simulations

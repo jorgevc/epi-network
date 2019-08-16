@@ -29,7 +29,7 @@ from control_protocol import noControl
 import copy
 
 class simulation:
-	 """Class simulation represents a single simulation of a epidemic
+	"""Class simulation represents a single simulation of a epidemic
 
     Attributes
     ----------
@@ -67,7 +67,7 @@ class simulation:
        Adds one patch (sector) to the simulation with list of parameters given as the argument
     """
 
-	
+
 	def __init__(self):
 		#parameteres
 		self.No_patches = 0 #numero de parches
@@ -80,6 +80,7 @@ class simulation:
 		self.control_protocol = noControl()
 		self.simulation_time = 100
 		self.total_infected = None
+		self.total_susceptible = None
 		self.total_recovered = None
 		self.runned_times = 0
 		
@@ -167,6 +168,7 @@ class simulation:
 		solution = np.array(solve_ivp(system, [min(self.time), max(self.time)], initial, t_eval=self.time).y).T
 		self.evolution = [[solution[:,node*5+column] for column in range(5)] for node in range(n)]
 		self.calculate_total_infected()
+		self.calculate_total_susceptible()
 		self.calculate_total_recovered()
 		self.runned_times += 1
 		
@@ -192,6 +194,11 @@ class simulation:
 		self.total_infected = self.evolution[0][1][:].copy()  #asumed 2nd equation is infected
 		for i in range(1,self.No_patches):
 			self.total_infected += self.evolution[i][1][:]
+			
+	def calculate_total_susceptible(self):
+		self.total_susceptible = self.evolution[0][0][:].copy()  #asumed 1st equation is susceptible
+		for i in range(1,self.No_patches):
+			self.total_susceptible += self.evolution[i][0][:]
 			
 	def calculate_total_recovered(self):
 		self.total_recovered = self.evolution[0][2][:].copy()  #asumed 3er ecuation is recovered

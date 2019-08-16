@@ -62,7 +62,7 @@ def PLOSModel(yv,t,param,p,n,control):
 
    for i in range (0,n):
       control_params = control.get_control(i)
-      beta[i] = param[i][0] - control_params[0]
+      beta[i] = param[i][0]*(1. - control_params[0])
       gamma[i] = param[i][1] # + control_params[1]
       alfa[i] = param[i][2]
       c[i] = param[i][3]

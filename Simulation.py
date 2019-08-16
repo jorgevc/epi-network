@@ -140,6 +140,19 @@ class simulation:
 		self.node[i] = np.array(Initial)
 		
 	def set_initial_conditions_all_patches(self,Initial):
+		"""Sets the same initial conditions for all the patches
+		
+		Parameters
+		----------
+		Initial : list or 1 dim numpy array
+		   List of initial conditions for a patch. This same conditions will be set for all patches
+		   
+		Returns
+		-------
+		none
+		
+		"""
+		
 		for i in range(self.No_patches):
 			self.set_initial_conditions_patch(i,Initial)
 			

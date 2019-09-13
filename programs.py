@@ -326,7 +326,7 @@ def comparison_SimpleControl_NoControl_SameNetwork():
 	#parameteres
 	n = 6 #numero de parches
 	p = 0.5 # parametro de la red binomial
-	min_residential = 0.8 # diagonal de la matriz de mobilidad mayor a este numero
+	min_residential = 0.8 # elementos de la diagonal de la matriz de mobilidad mayor a este numero
 	#vector de parametros para una zona
 	param = [0]*5
 	param[0] = beta1 = 0.67
@@ -392,7 +392,7 @@ def MPI_control_comparison():
 	number_of_simulations = 240 #8
 	
 	#parameteres
-	n = 6 #numero de parches
+	n = 30 #numero de parches
 	p = 0.5 # parametro de la red binomial
 	min_residential = 0.8 # diagonal de la matriz de mobilidad mayor a este numero
 	#vector de parametros para una zona
@@ -436,10 +436,13 @@ def MPI_control_comparison():
 		y[1]=1. # Se agrega 1 infectado a las condiciones iniciales
 		sim.set_initial_conditions_patch(1,y) #Se establece esta condicion inicial en la zona 1
 		sim.set_model(PLOSModel) #Se establece el modelo usado en PLOS como modelo para hacer la simulacion
-		sim.set_simulation_time(100)  #Se establece el tiempo de simulacion.
+		sim.set_simulation_time(200)  #Se establece el tiempo de simulacion.
 		if rank == 0:
 			P=MobilityNetwork() #Se crea la red de mobilidad
-			P.binomial(n,p,min_residential) #para cada simulacion se genera una nueva red binomial
+			#P.binomial(n,p,min_residential) #para cada simulacion se genera una nueva red binomial
+			#P.barabsi_albert(n,2,min_residential) # argumentos (n=No_de_nodos,m=No_de_enlaces que se incertan al incertar un nodo,min_residential)
+			P.random(n,5*n,min_residential) # argumentos (n=No_de_nodos,m=No_de_enlaces,min_residential), red muy conectada
+			#P.random(n,n,min_residential) # red aleatoria poco conectada
 		else:
 			P=None
 		P=comm.bcast(P,root=0)
@@ -542,11 +545,11 @@ def MPI_control_comparison():
 		
 
 if (__name__ == '__main__'):
-	Homogeneus_Simple_Control()
+	#Homogeneus_Simple_Control()
 	#Homogeneus_Without_Control()
 	#Without_Control()
 	#simple_simulations_ensemble()
-	#MPI_simulations_ensemble()  # requiere MPI instalado : "mpiexec" Run using: "mpiexec -n <number_of_process> python programs.py"
+	#MPI_simulations_ensemble()  # requiere MPI instalado : "mpiexec" Run using: "mpiexec -n <number_of_process> python programs.py" (n=8)
 	#comparison_SimpleControl_NoControl()
 	#comparison_SimpleControl_NoControl_SameNetwork()
-	#MPI_control_comparison() # Run using: "mpiexec -n 4 python programs.py"
+	MPI_control_comparison() # Run using: "mpiexec -n 4 python programs.py"

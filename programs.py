@@ -24,10 +24,11 @@ import matplotlib
 import matplotlib.pyplot as plt
 from Simulation import simulation
 from modelos import PLOSModel
+from modelos import SIR
 from MobilityNetwork import MobilityNetwork
-from control_protocol import controlProtocol
+from Control_protocol import controlProtocol
 from SimulationsEnsemble import simulationsEnsemble
-from control_protocol import randomControl
+from Control_protocol import randomControl
 import copy
 
 def Homogeneus_Simple_Control():
@@ -72,7 +73,43 @@ def Homogeneus_Simple_Control():
 	sim.plot_all() # Se grafica I para la zona 0.
 	sim.plot_total_infected()
 	return sim
+	#-----------------------------------------------------------------------------------------------------------------------
+
+def SIR_Homogeneo():
+	#parameteres
+	n = 6 #numero de parches
+	p = 0.5 # parametro de la red binomial
+	min_residential = 0.8 # diagonal de la matriz de mobilidad mayor a este numero
+	#vector de parametros para una zona
+	param = np.zeros(2)
+	param[0] = beta1 = 0.67
+	param[1] = gama1 = 1./7.
+
+	#initial conditions para una zona
+	x = np.zeros(3)
+	S1 = x[0] = 1500.
+	I1 = x[1] = 0.0 
+	R1 = x[2] = 0.0
 	
+	P=MobilityNetwork() #Se crea la red de mobilidad
+	P.binomial(n,p,min_residential) #en este caso es una red binomial
+	
+	sim = simulation() #se crea objeto simulacion
+	sim.add_many_patches_parameters(n,param)  # se agregan n zonas con parametros dados en param
+	sim.set_conectivity_network(P) # se agrega la red de conectividad P
+	sim.set_initial_conditions_all_patches(x) # se agregan las condiciones inicials para todos las zonas
+	x[1]=x[1]+1. # Se agrega 1 infectado mosquito a las condiciones iniciales
+	sim.set_initial_conditions_patch(1,x) #Se establece esta condicion inicial en la zona 1
+	sim.set_model(SIR) #Se establece el modelo usado en PLOS como modelo para hacer la simulacion
+	sim.set_simulation_time(80) #How many "days" to simulate 
+	sim.run() #Se corre la simulacion
+	sim.plot_all() # Se grafica I para la zona 0.
+	sim.plot_total_infected()
+	return sim
+
+	
+
+	#-----------------------------------------------------------------------------------------------------------------------
 def Homogeneus_Without_Control():
 	#parameteres
 	n = 6 #numero de parches
@@ -550,6 +587,7 @@ if (__name__ == '__main__'):
 	#Without_Control()
 	#simple_simulations_ensemble()
 	#MPI_simulations_ensemble()  # requiere MPI instalado : "mpiexec" Run using: "mpiexec -n <number_of_process> python programs.py" (n=8)
+	SIR_Homogeneo()
 	#comparison_SimpleControl_NoControl()
 	#comparison_SimpleControl_NoControl_SameNetwork()
-	MPI_control_comparison() # Run using: "mpiexec -n 4 python programs.py"
+	#MPI_control_comparison() # Run using: "mpiexec -n 4 python programs.py"

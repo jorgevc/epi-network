@@ -24,8 +24,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from modelos import PLOSModel
 from MobilityNetwork import MobilityNetwork
-from control_protocol import controlProtocol
-from control_protocol import noControl
+from Control_protocol import controlProtocol
+from Control_protocol import noControl
 import copy
 
 class simulation:
@@ -172,14 +172,15 @@ class simulation:
 		parameters = self.parameters
 		self.time = np.linspace(0.0,self.simulation_time,self.simulation_time*10)
 
-		#def system(estate,t):
-		def system(t,estate):
+		def system(estate,t):
+		#def system(t,estate):
 			return self.model(estate,t,parameters,p,n,control)
 
 		initial = np.array(self.node).flatten()
-		#solution = odeint(system,initial,self.time)
-		solution = np.array(solve_ivp(system, [min(self.time), max(self.time)], initial, t_eval=self.time).y).T
-		self.evolution = [[solution[:,node*5+column] for column in range(5)] for node in range(n)]
+		
+		solution = odeint(system,initial,self.time)
+		#solution = np.array(solve_ivp(system, [min(self.time), max(self.time)], initial, t_eval=self.time).y).T
+		self.evolution = [[solution[:,node*3+column] for column in range(3)] for node in range(n)]
 		self.calculate_total_infected()
 		self.calculate_total_susceptible()
 		self.calculate_total_recovered()

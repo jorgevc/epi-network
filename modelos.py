@@ -158,3 +158,50 @@ def NPatch2(yv,param,p,n):
           b = np.concatenate((b,a),axis=0) 
    return b
 
+#-----------------------------------------------------------------------------------------------------------------
+
+def SIR(yv,t,param,p,n,control):
+   x = yv.reshape(n,3)
+
+   S = np.zeros(n) 
+   I = np.zeros(n)
+   R = np.zeros(n)
+   F = np.zeros(n)
+   N = np.zeros(n)
+   W = np.zeros(n)
+
+   beta  = np.zeros(n)
+   gamma = np.zeros(n)
+
+   j=0
+   z=0
+   for i in range (0,n): 
+      S[i] = x[i][0]
+      I[i] = x[i][1]
+      R[i] = x[i][2]
+      
+      N[i] = S[i] + I[i] + R[i]
+      
+      beta[i] = param[i][0]
+      gamma[i] = param[i][1]
+      
+
+   for i in range (0,n):
+      W[i] = sum(N*p[:,i]) 
+      F[i] = I[i]/W[i]
+
+   for i in range (0,n):
+   
+      dS = -beta[i]*sum(p[i,:]*S)*sum(p[i,:]*F)
+      dI =  beta[i]*sum(p[i,:]*S)*sum(p[i,:]*F)-gamma[i]*I[i]
+      dR =  gamma[i]*I[i]
+      
+      if i==0:
+         b = np.array([dS,dI,dR])
+      else:
+         a = np.array([dS,dI,dR])
+         b = np.concatenate((b,a),axis=0)
+      
+   
+
+   return b

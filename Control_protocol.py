@@ -31,9 +31,11 @@ class controlProtocol:
 		self.last_observation_time = None
 		self.observation_interval = 1.
 		self.control = [[0.,0.]]*self.number_of_patches
-		self.TRh=[] #human Transmission index
-		self.VR=[]  #Vulnerability index (human)
-		self.TRv=[] #vector Transmission idex
+		self.TRh=[]    #human Transmission index
+		self.VR=[]     #Vulnerability index (human)
+		self.TRv=[]    #vector Transmission idex
+		self.R_inf=None  # Tamano fina de la enfermedad en la red metapoblacional
+		self.Thetas=[] # Indice R*
 		self.last_control_time = 0.
 		self.control_interval = 1.
 
@@ -99,7 +101,83 @@ class controlProtocol:
 		self.VR.append((t,[(sum(np.dot(Rh,Rv)[:,j])) for j in range(n)])) #vulnerability of patch j
 		self.TRv.append((t, [sum(Rv[i,:]) for i in range(n)])) #vector transmission index (verificar)
 		return self.TRh[-1][1]
+#-------------------------------------------------------------------------------------------------
+	def Itotal(self):
+		n=self.number_of_patches
+		S=[]
+		I=[]
+		R=[]
+		beta=[]
+		gamma=[]
+		W=[]
+		N=[]
+		for i in range(n):
+			S.append(self.observations[i][0])
+			I.append(self.observations[i][1])
+			R.append(self.observations[i][2])
+			beta.append(self.params[i][0])
+			gamma.append(self.params[i][1])
+			N.append(S[i] + I[i] + R[i])
 
+		p=self.P_network.matrix
+		for k in range(n):
+			W.append(np.dot(N,p[:,k]))
+
+
+
+ 		def I_tot(x, p, N, W, gamma, beta):
+			x_next = np.zeros(len(x))
+	
+			for i in range(len(x)):
+				P[i][j]=np.sum(p[i][:]*p[j][:]/w[:])
+				Theta[i]=np.sum(P[i][:]*beta[i][:]/gamma[:])*x[i]
+	
+				x_next[i]=N[i]-S[i]*exp(-Theta[i])
+		
+			return x_next
+	
+
+		x=np.ones(n)
+		R=I_tot(x, p, N, w, gamma, beta)
+		while(errorNumerico > err):
+			R_next = I_tot(R, p, N)
+			errorNumerico = abs(R_next - R)
+			R=R_next
+		self.R_inf=R
+		return R
+
+	
+	def Theta(self):
+		n=self.number_of_patches
+		S=[]
+		I=[]
+		R=[]
+		beta=[]
+		gamma=[]
+		W=[]
+		N=[]
+		for i in range(n):
+			S.append(self.observations[i][0])
+			I.append(self.observations[i][1])
+			R.append(self.observations[i][2])
+			beta.append(self.params[i][0])
+			gamma.append(self.params[i][1])
+			N.append(S[i] + I[i] + R[i])
+
+		p=self.P_network.matrix
+		for k in range(n):
+			W.append(np.dot(N,p[:,k]))
+
+
+		if self.R_inf=None: self.Itotal()
+
+		for i in range(len(N)):
+			P[i][j]=np.sum(p[i][:]*p[j][:]/w[:])
+			Theta[i]=np.sum(P[i][:]*beta[i][:]/gamma[:])*self.R_inf[i]
+	
+		return Theta
+
+#-------------------------------------------------------------------------------------------------
 	def set_observation_interval(self, dt):
 		self.observation_interval = dt
 		if(self.control_interval==None):
@@ -140,3 +218,13 @@ class randomControl(controlProtocol):
 		random_patch = rnd.randint(0,self.number_of_patches-1)
 		self.control = [[0.,0.]] * self.number_of_patches
 		self.control[random_patch] = [0.5,0.5] 
+
+#-----------------------------------------------------------------------------------
+
+
+#w[j]=np.sum(p[:][j]*N[i])
+
+
+
+
+

@@ -102,7 +102,7 @@ class controlProtocol:
 		self.TRv.append((t, [sum(Rv[i,:]) for i in range(n)])) #vector transmission index (verificar)
 		return self.TRh[-1][1]
 #-------------------------------------------------------------------------------------------------
-	def Itotal(self):
+	def Itotal(self,N):
 		n=self.number_of_patches
 		S=[]
 		I=[]
@@ -110,71 +110,80 @@ class controlProtocol:
 		beta=[]
 		gamma=[]
 		W=[]
-		N=[]
 		for i in range(n):
 			S.append(self.observations[i][0])
 			I.append(self.observations[i][1])
 			R.append(self.observations[i][2])
 			beta.append(self.params[i][0])
 			gamma.append(self.params[i][1])
-			N.append(S[i] + I[i] + R[i])
 
 		p=self.P_network.matrix
-		for k in range(n):
+		for k in range(n): 
 			W.append(np.dot(N,p[:,k]))
 
 
 
 		def I_tot(x, p, N, W, gamma, beta):
+			gamma=np.array(gamma)
+			#print(gamma,'gamma')
+			#print(x,'x')
+			#print(W,'W')
 			x_next = np.zeros(len(x))
-
+			Q=np.zeros((len(x),len(x)))
 			for i in range(len(x)):
 				for j in range(len(x)):
-					p[i][j]=np.sum(p[i][:]*p[j][:]/W[:])
-					Theta[i]=np.sum(p[i][:]*beta[i][:]/gamma[:])*x[i]
-					x_next[i]=N[i]-S[i]*exp(-Theta[i])
-			return x_next
+					Q[i][j]=np.sum((p[i][:]*p[j][:]*beta[:])/W[:])
+			#print(Q[1][:],'Q')
+			Theta=np.zeros(len(x))	
+			for i in range(len(x)):
+				Theta[i]=np.sum((Q[i][:]/gamma[:])*x[:])
+			x_next=N-S*np.exp(-Theta)
+			print(x_next,'xnext')
+			return (x_next,Theta)
 
 
 		x=np.ones(n)
-		R=I_tot(x, p, N, W, gamma, beta)
+		R,Indice=I_tot(x, p, N, W, gamma, beta)
+		errorNumerico=1
+		err=.001
 		while(errorNumerico > err):
-			R_next = I_tot(R, p, N)
-			errorNumerico = abs(R_next - R)
+			R_next,Indice = I_tot(R, p, N, W, gamma, beta)
+			errorNumerico = np.linalg.norm(R_next - R)
 			R=R_next
 		self.R_inf=R
-		return R
+		self.Thetas=Indice
+		return (R,Indice)
 
 	
-	def Theta(self):
-		n=self.number_of_patches
-		S=[]
-		I=[]
-		R=[]
-		beta=[]
-		gamma=[]
-		W=[]
-		N=[]
-		for i in range(n):
-			S.append(self.observations[i][0])
-			I.append(self.observations[i][1])
-			R.append(self.observations[i][2])
-			beta.append(self.params[i][0])
-			gamma.append(self.params[i][1])
-			N.append(S[i] + I[i] + R[i])
+	# def Theta(self):
+	# 	n=self.number_of_patches
+	# 	S=[]
+	# 	I=[]
+	# 	R=[]
+	# 	beta=[]
+	# 	gamma=[]
+	# 	W=[]
+	# 	N=[]
+	# 	for i in range(n):
+	# 		S.append(self.observations[i][0])
+	# 		I.append(self.observations[i][1])
+	# 		R.append(self.observations[i][2])
+	# 		beta.append(self.params[i][0])
+	# 		gamma.append(self.params[i][1])
+	# 		N.append(S[i] + I[i] + R[i])
 
-		p=self.P_network.matrix
-		for k in range(n):
-			W.append(np.dot(N,p[:,k]))
+	# 	p=self.P_network.matrix
+	# 	for k in range(n):
+	# 		W.append(np.dot(N,p[:,k]))
 
 
-		if self.R_inf==None: self.Itotal()
+	# 	if self.R_inf==None: self.Itotal()
 
-		for i in range(len(N)):
-			p[i][j]=np.sum(p[i][:]*p[j][:]/W[:])
-			Theta[i]=np.sum(p[i][:]*beta[i][:]/gamma[:])*self.R_inf[i]
+	# 	for i in range(len(N)):
+	# 		P[i][j]=np.sum(p[i][:]*p[j][:]/W[:])
+	# 		Theta[i]=np.sum(P[i][:]*beta[i][:]/gamma[:])*self.R_inf[i]
 	
-		return Theta
+	# 	return Theta
 
 #-------------------------------------------------------------------------------------------------
 	def set_observation_interval(self, dt):

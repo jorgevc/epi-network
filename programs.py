@@ -90,7 +90,7 @@ def SIR_Homogeneo():
 	S1 = x[0] = 1500.
 	I1 = x[1] = 0.0 
 	R1 = x[2] = 0.0
-	
+	N  = [1500,1500,1500,1500,1500,1500]
 	P=MobilityNetwork() #Se crea la red de mobilidad
 	P.binomial(n,p,min_residential) #en este caso es una red binomial
 	
@@ -109,8 +109,8 @@ def SIR_Homogeneo():
 	sim.run() #Se corre la simulacion
 	sim.plot_all() # Se grafica I para la zona 0.
 	sim.plot_total_infected()
-	sim.control_protocol.Itotal()
-	print(sim.control_protocol.R_inf)
+	#sim.control_protocol.Itotal(N)
+	print(sim.control_protocol.Itotal(N))
 	return sim
 
 	

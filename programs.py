@@ -101,6 +101,7 @@ def SIR_Homogeneo():
 	x[1]=x[1]+1. # Se agrega 1 infectado mosquito a las condiciones iniciales
 	sim.set_initial_conditions_patch(1,x) #Se establece esta condicion inicial en la zona 1
 	sim.set_model(SIR) #Se establece el modelo usado en PLOS como modelo para hacer la simulacion
+	params=sim.parameters
 	sim.set_simulation_time(80) #How many "days" to simulate 
 	ControlSimple=controlProtocol(params,P)
 	ControlSimple.set_observation_interval(70)
@@ -108,6 +109,7 @@ def SIR_Homogeneo():
 	sim.run() #Se corre la simulacion
 	sim.plot_all() # Se grafica I para la zona 0.
 	sim.plot_total_infected()
+	sim.control_protocol.Itotal()
 	print(sim.control_protocol.R_inf)
 	return sim
 

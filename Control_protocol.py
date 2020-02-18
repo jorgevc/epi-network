@@ -125,19 +125,19 @@ class controlProtocol:
 
 
 
- 		def I_tot(x, p, N, W, gamma, beta):
+		def I_tot(x, p, N, W, gamma, beta):
 			x_next = np.zeros(len(x))
 
 			for i in range(len(x)):
-				P[i][j]=np.sum(p[i][:]*p[j][:]/w[:])
-				Theta[i]=np.sum(P[i][:]*beta[i][:]/gamma[:])*x[i]
-	
-				x_next[i]=N[i]-S[i]*exp(-Theta[i])
+				for j in range(len(x)):
+					p[i][j]=np.sum(p[i][:]*p[j][:]/W[:])
+					Theta[i]=np.sum(p[i][:]*beta[i][:]/gamma[:])*x[i]
+					x_next[i]=N[i]-S[i]*exp(-Theta[i])
 			return x_next
 
 
 		x=np.ones(n)
-		R=I_tot(x, p, N, w, gamma, beta)
+		R=I_tot(x, p, N, W, gamma, beta)
 		while(errorNumerico > err):
 			R_next = I_tot(R, p, N)
 			errorNumerico = abs(R_next - R)
@@ -168,11 +168,11 @@ class controlProtocol:
 			W.append(np.dot(N,p[:,k]))
 
 
-		if self.R_inf=None: self.Itotal()
+		if self.R_inf==None: self.Itotal()
 
 		for i in range(len(N)):
-			P[i][j]=np.sum(p[i][:]*p[j][:]/w[:])
-			Theta[i]=np.sum(P[i][:]*beta[i][:]/gamma[:])*self.R_inf[i]
+			p[i][j]=np.sum(p[i][:]*p[j][:]/W[:])
+			Theta[i]=np.sum(p[i][:]*beta[i][:]/gamma[:])*self.R_inf[i]
 	
 		return Theta
 

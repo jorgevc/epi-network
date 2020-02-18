@@ -127,15 +127,14 @@ class controlProtocol:
 
  		def I_tot(x, p, N, W, gamma, beta):
 			x_next = np.zeros(len(x))
-	
+
 			for i in range(len(x)):
 				P[i][j]=np.sum(p[i][:]*p[j][:]/w[:])
 				Theta[i]=np.sum(P[i][:]*beta[i][:]/gamma[:])*x[i]
 	
 				x_next[i]=N[i]-S[i]*exp(-Theta[i])
-		
 			return x_next
-	
+
 
 		x=np.ones(n)
 		R=I_tot(x, p, N, w, gamma, beta)
@@ -221,8 +220,6 @@ class randomControl(controlProtocol):
 
 #-----------------------------------------------------------------------------------
 
-
-#w[j]=np.sum(p[:][j]*N[i])
 
 
 

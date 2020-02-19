@@ -29,6 +29,7 @@ from MobilityNetwork import MobilityNetwork
 from Control_protocol import controlProtocol
 from SimulationsEnsemble import simulationsEnsemble
 from Control_protocol import randomControl
+from Control_protocol import finalEpidemicSizeControl
 import copy
 
 def Homogeneus_Simple_Control():
@@ -103,17 +104,16 @@ def SIR_Homogeneo():
 	sim.set_model(SIR) #Se establece el modelo usado en PLOS como modelo para hacer la simulacion
 	params=sim.parameters
 	sim.set_simulation_time(80) #How many "days" to simulate 
-	ControlSimple=controlProtocol(params,P)
-	ControlSimple.set_observation_interval(70)
-	sim.set_control_protocol(ControlSimple)
+	FinalSizeControl=finalEpidemicSizeControl(params,P,N)
+	print(FinalSizeControl.R_inf)
+	print(FinalSizeControl.Thetas)
+	sim.set_control_protocol(FinalSizeControl)
 	sim.run() #Se corre la simulacion
 	sim.plot_all() # Se grafica I para la zona 0.
 	sim.plot_total_infected()
 	#sim.control_protocol.Itotal(N)
-	print(sim.control_protocol.Itotal(N))
 	return sim
 
-	
 
 	#-----------------------------------------------------------------------------------------------------------------------
 def Homogeneus_Without_Control():

@@ -123,31 +123,29 @@ class controlProtocol:
 
 
 
-		def I_tot(x, p, N, W, gamma, beta):
+		def I_tot(x, p, W, gamma, beta):
 			gamma=np.array(gamma)
-			#print(gamma,'gamma')
-			#print(x,'x')
-			#print(W,'W')
+
 			x_next = np.zeros(len(x))
 			Q=np.zeros((len(x),len(x)))
 			for i in range(len(x)):
 				for j in range(len(x)):
 					Q[i][j]=np.sum((p[i][:]*p[j][:]*beta[:])/W[:])
-			#print(Q[1][:],'Q')
 			Theta=np.zeros(len(x))	
 			for i in range(len(x)):
 				Theta[i]=np.sum((Q[i][:]/gamma[:])*x[:])
+				print(Theta,'theta')
 			x_next=N-S*np.exp(-Theta)
 			print(x_next,'xnext')
 			return (x_next,Theta)
 
 
 		x=np.ones(n)
-		R,Indice=I_tot(x, p, N, W, gamma, beta)
+		R,Indice=I_tot(x, p, W, gamma, beta)
 		errorNumerico=1
 		err=.001
 		while(errorNumerico > err):
-			R_next,Indice = I_tot(R, p, N, W, gamma, beta)
+			R_next,Indice = I_tot(R, p, W, gamma, beta)
 			errorNumerico = np.linalg.norm(R_next - R)
 			R=R_next
 		self.R_inf=R
@@ -228,9 +226,3 @@ class randomControl(controlProtocol):
 		self.control[random_patch] = [0.5,0.5] 
 
 #-----------------------------------------------------------------------------------
-
-
-
-
-
-

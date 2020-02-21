@@ -82,15 +82,15 @@ def SIR_Homogeneo():
 	min_residential = 0.8 # diagonal de la matriz de mobilidad mayor a este numero
 	#vector de parametros para una zona
 	param = np.zeros(2)
-	param[0] = beta1 = 0.67
-	param[1] = gama1 = 1./7.
+	param[0] = beta1 = 1
+	param[1] = gama1 = 1.5
 
 	#initial conditions para una zona
 	x = np.zeros(3)
-	S1 = x[0] = 1500.
+	S1 = x[0] = 2500.
 	I1 = x[1] = 0.0 
 	R1 = x[2] = 0.0
-	N  = [1500,1500,1500,1500,1500,1500]
+	N  = [2500,2500,2500,2500,2500,2500]
 	P=MobilityNetwork() #Se crea la red de mobilidad
 	P.binomial(n,p,min_residential) #en este caso es una red binomial
 	

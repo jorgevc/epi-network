@@ -82,8 +82,8 @@ def SIR_Homogeneo():
 	min_residential = 0.8 # diagonal de la matriz de mobilidad mayor a este numero
 	#vector de parametros para una zona
 	param = np.zeros(2)
-	param[0] = beta1 = 1
-	param[1] = gama1 = 1.5
+	param[0] = beta1 = 1.5
+	param[1] = gama1 = 1
 
 	#initial conditions para una zona
 	x = np.zeros(3)
@@ -113,7 +113,45 @@ def SIR_Homogeneo():
 	print(sim.control_protocol.Itotal(N))
 	return sim
 
+def Simple_Simulation_Emsemble_SIR():
+	#numero de simulaciones en el ensemble
+	number_of_simulations = 8
+	#parameteres
+	n = 6 #numero de parches
+	p = 0.5 # parametro de la red binomial
+	min_residential = 0.8 # diagonal de la matriz de mobilidad mayor a este numero
+	#vector de parametros para una zona
+	param = np.zeros(2)
+	param[0] = beta1 = 1.5
+	param[1] = gama1 = 1
+
+	#initial conditions para una zona
+	x = np.zeros(3)
+	S1 = x[0] = 2500.
+	I1 = x[1] = 0.0 
+	R1 = x[2] = 0.0
+
 	
+	sim = simulation() #se crea objeto simulacion
+	sim.add_many_patches_parameters(n,param)  # se agregan n zonas con parametros dados en param
+	sim.set_initial_conditions_all_patches(x) # se agregan las condiciones iniciales para todos las zonas
+	x[1]=x[1]+1. # Se agrega 1 infectado mosquito a las condiciones iniciales
+	sim.set_initial_conditions_patch(1,x) #Se establece esta condicion inicial en la zona 1
+	sim.set_model(SIR) #Se establece el modelo usado en PLOS como modelo para hacer la simulacion
+	
+	P=MobilityNetwork() #Se crea la red de mobilidad
+	
+	ensemble = simulationsEnsemble() # se crea el objeto ensamble_de_simulaciones
+	for i in range(number_of_simulations) :
+		P.binomial(n,p,min_residential) #para cada simulacion se genera una nueva red binomial
+		sim.set_conectivity_network(P)
+		ensemble.add_simulation(sim)
+
+	ensemble.run_all_simulations() # run all simulations in the ensemble
+	ensemble.plot_infected_average()
+	plt.show()
+	
+
 
 	#-----------------------------------------------------------------------------------------------------------------------
 def Homogeneus_Without_Control():
@@ -592,6 +630,7 @@ if (__name__ == '__main__'):
 	#Homogeneus_Without_Control()
 	#Without_Control()
 	#simple_simulations_ensemble()
+	Simple_Simulation_Emsemble_SIR()
 	#MPI_simulations_ensemble()  # requiere MPI instalado : "mpiexec" Run using: "mpiexec -n <number_of_process> python programs.py" (n=8)
 	SIR_Homogeneo()
 	#comparison_SimpleControl_NoControl()

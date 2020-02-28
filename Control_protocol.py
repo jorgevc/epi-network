@@ -134,9 +134,9 @@ class controlProtocol:
 			Theta=np.zeros(len(x))	
 			for i in range(len(x)):
 				Theta[i]=np.sum((Q[i][:]/gamma[:])*x[:])
-				print(Theta,'theta')
+				#print(Theta,'theta')
 			x_next=N-S*np.exp(-Theta)
-			print(x_next,'xnext')
+			#print(x_next,'xnext')
 			return (x_next,Theta)
 
 

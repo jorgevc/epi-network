@@ -1,6 +1,7 @@
 from Simulation import simulation
 import copy
 from modelos import PLOSModel
+from modelos import SIR
 from MobilityNetwork import MobilityNetwork
 import matplotlib.pyplot as plt
 import matplotlib.lines as ml
@@ -190,7 +191,7 @@ if __name__ == '__main__':
 	min_residential = 0.8 # diagonal de la matriz de mobilidad mayor a este numero
 	#vector de parametros para una zona
 	param = [0]*2
-	param[0] = beta1 = 1
+	param[0] = beta1 = 1.5
 	param[1] = gama1 = 1.
 	#initial conditions para una zona
 	x  = [0]*3
@@ -201,8 +202,8 @@ if __name__ == '__main__':
 	
 	sim = simulation() #se crea objeto simulacion
 	sim.add_many_patches_parameters(n,param)  # se agregan n zonas con parametros dados en param
-	sim.set_initial_conditions_all_patches(y) # se agregan las condiciones iniciales para todos las zonas
-	x[1]=y[1]+1. # Se agrega 1 infecto a las condiciones iniciales
+	sim.set_initial_conditions_all_patches(x) # se agregan las condiciones iniciales para todos las zonas
+	x[1]=x[1]+1. # Se agrega 1 infecto a las condiciones iniciales
 	sim.set_initial_conditions_patch(1,x) #Se establece esta condicion inicial en la zona 1
 	sim.set_model(SIR) #Se establece el modelo usado en PLOS como modelo para hacer la simulacion
 	

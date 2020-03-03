@@ -85,6 +85,30 @@ class MobilityNetwork:
 		
 		G=nx.binomial_graph(n,p)
 		self.weight_edges(G, min_residential)
+
+	def binomial2(self,n,p2,min_residential): 
+		"""
+		Se crea un matriz en el cual se muestra la interaccion de los parches
+		
+		Parameters
+		--------
+		n : int
+			Numero de nodos en la red
+		p : float
+			Parametro de la matriz binomial
+		min_residential: float
+			Minima fraccion de tiempo que los individuos estan en sus propios parches.
+			Es decir la diagonal tendra numeros mayores o iguales a este valor
+		
+		Returns
+		------
+		numpy matriz of size : n x n
+		"""
+		
+		
+		G=nx.binomial_graph(n,p2)
+		self.weight_edges(G, min_residential)
+
 		
 	def barabsi_albert(self,n,m,min_residential):
 		"""

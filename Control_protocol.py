@@ -34,8 +34,6 @@ class controlProtocol:
 		self.TRh=[]    #human Transmission index
 		self.VR=[]     #Vulnerability index (human)
 		self.TRv=[]    #vector Transmission idex
-		self.R_inf=None  # Tamano fina de la enfermedad en la red metapoblacional
-		self.Thetas=[] # Indice R*
 		self.last_control_time = 0.
 		self.control_interval = 1.
 
@@ -101,27 +99,6 @@ class controlProtocol:
 		self.VR.append((t,[(sum(np.dot(Rh,Rv)[:,j])) for j in range(n)])) #vulnerability of patch j
 		self.TRv.append((t, [sum(Rv[i,:]) for i in range(n)])) #vector transmission index (verificar)
 		return self.TRh[-1][1]
-#-------------------------------------------------------------------------------------------------
-	def Itotal(self,N):
-		n=self.number_of_patches
-		S=[]
-		I=[]
-		R=[]
-		beta=[]
-		gamma=[]
-		W=[]
-		for i in range(n):
-			S.append(self.observations[i][0])
-			I.append(self.observations[i][1])
-			R.append(self.observations[i][2])
-			beta.append(self.params[i][0])
-			gamma.append(self.params[i][1])
-
-		p=self.P_network.matrix
-		for k in range(n): 
-			W.append(np.dot(N,p[:,k]))
-
-
 
 		def I_tot(x, p, W, gamma, beta):
 			gamma=np.array(gamma)
@@ -183,7 +160,7 @@ class controlProtocol:
 	
 	# 	return Theta
 
-#-------------------------------------------------------------------------------------------------
+
 	def set_observation_interval(self, dt):
 		self.observation_interval = dt
 		if(self.control_interval==None):
@@ -225,4 +202,60 @@ class randomControl(controlProtocol):
 		self.control = [[0.,0.]] * self.number_of_patches
 		self.control[random_patch] = [0.5,0.5] 
 
-#-----------------------------------------------------------------------------------
+class finalEpidemicSizeControl(controlProtocol):
+	
+	def __init__(self,params,P_network,N):
+		super().__init__(params, P_network)
+		self.N=N #List (or vector) with the total population of the diferent patches
+		self.R_inf=None  # Tamano fina de la enfermedad en la red metapoblacional
+		self.Thetas=[] # Indice R*
+		self.Itotal()
+		
+	def recalculate_control(self):
+		pass
+	
+	def calculate_indices(self,t):
+		pass
+		
+	def Itotal(self):
+		"""Calculates the Final size of the epidemic of each patch"""
+		n=self.number_of_patches
+		beta=[]
+		gamma=[]
+		W=[]
+		N=self.N
+		for i in range(n):
+			beta.append(self.params[i][0])
+			gamma.append(self.params[i][1])
+		beta=np.array(beta)
+		gamma=np.array(gamma)
+
+		p=self.P_network.matrix
+		for k in range(n): 
+			W.append(np.dot(N,p[:,k]))
+		W=np.array(W)
+
+		x=np.ones(n)
+		R,Indice=self.I_tot(x, p, N, W, gamma, beta)
+		errorNumerico=1.
+		err=.001
+		while(errorNumerico > err):
+			R_next,Indice = self.I_tot(R, p, N, W, gamma, beta)
+			errorNumerico = np.linalg.norm(R_next - R)
+			R=R_next
+		self.R_inf=R
+		self.Thetas=Indice
+		return (R,Indice)
+
+	def I_tot(self, x, p, N, W, gamma, beta):
+		"""internal helper function"""
+		Q=np.zeros((len(x),len(x)))
+		for i in range(len(x)):
+			for j in range(len(x)):
+				Q[i][j]=np.sum(p[i][:]*p[j][:]*(beta[:]/W[:]))
+		Theta=np.zeros((len(x)))
+		for i in range(len(x)):
+			Theta[i]=np.sum((Q[i][:]/gamma[:])*x[:])
+		x_next=N-N*np.exp(-Theta)
+		return (x_next,Theta)
+

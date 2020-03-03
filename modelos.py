@@ -190,10 +190,13 @@ def SIR(yv,t,param,p,n,control):
       W[i] = sum(N*p[:,i]) 
       F[i] = I[i]/W[i]
 
+   if(control.observation_time(t)):
+         control.observe(x,t)
+
    for i in range (0,n):
    
-      dS = -beta[i]*sum(p[i,:]*S)*sum(p[i,:]*F)
-      dI =  beta[i]*sum(p[i,:]*S)*sum(p[i,:]*F)-gamma[i]*I[i]
+      dS = -(beta[i]/W[i])*sum(p[i,:]*S)*sum(p[i,:]*I)
+      dI =  (beta[i]/W[i])*sum(p[i,:]*S)*sum(p[i,:]*I)-gamma[i]*I[i]
       dR =  gamma[i]*I[i]
       
       if i==0:

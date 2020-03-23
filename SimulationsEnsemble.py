@@ -42,7 +42,7 @@ class simulationsEnsemble:
 			infected_average += self.simulations[i].total_infected
 		self.infected_average = infected_average/(n)
 		return infected_average.copy()
-		
+	
 	def average_suseptible(self):
 		n=self.number_of_simulations
 		if (n>0 and self.simulations[0].runned_times == 0):

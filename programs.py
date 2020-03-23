@@ -25,6 +25,7 @@ import matplotlib.pyplot as plt
 from Simulation import simulation
 from modelos import PLOSModel
 from modelos import SIR
+from modelos import SIRControl
 from MobilityNetwork import MobilityNetwork
 from Control_protocol import controlProtocol
 from SimulationsEnsemble import simulationsEnsemble
@@ -76,14 +77,14 @@ def Homogeneus_Simple_Control():
 	return sim
 	#-----------------------------------------------------------------------------------------------------------------------
 
-def SIR_Homogeneo():
-	#parameteres
+def SIR_Homogeneo_Control():
+		#parameteres
 	n = 6 #numero de parches
 	p = 0.5 # parametro de la red binomial
 	min_residential = 0.8 # diagonal de la matriz de mobilidad mayor a este numero
 	#vector de parametros para una zona
 	param = np.zeros(2)
-	param[0] = beta1 = 1.5
+	param[0] = beta1 = 2.5
 	param[1] = gama1 = 1
 
 	#initial conditions para una zona
@@ -91,7 +92,54 @@ def SIR_Homogeneo():
 	S1 = x[0] = 2500.
 	I1 = x[1] = 0.0 
 	R1 = x[2] = 0.0
-	N  = [2500,2500,2500,2500,2500,2500]
+	N  = [2500,3500,5000,4500,3000,1500]
+	P=MobilityNetwork() #Se crea la red de mobilidad
+	P.binomial(n,p,min_residential) #en este caso es una red binomial
+	
+	sim = simulation() #se crea objeto simulacion
+	sim.add_many_patches_parameters(n,param)  # se agregan n zonas con parametros dados en param
+	sim.set_conectivity_network(P) # se agrega la red de conectividad P
+	sim.set_initial_conditions_all_patches(x) # se agregan las condiciones inicials para todos las zonas
+	x[1]=x[1]+1. # Se agrega 1 infectado mosquito a las condiciones iniciales
+	sim.set_initial_conditions_patch(1,x) #Se establece esta condicion inicial en la zona 1
+	sim.set_model(SIRControl) #Se establece el modelo usado en PLOS como modelo para hacer la simulacion
+	params=sim.parameters
+	sim.set_simulation_time(80) #How many "days" to simulate 
+	FinalSizeControl=finalEpidemicSizeControl(params,P,N)
+	ControlSimple=controlProtocol(params,P)
+	ControlSimple.set_observation_interval(7.)
+	#print(FinalSizeControl.R_inf)
+	#print(FinalSizeControl.Thetas)
+	sim.set_control_protocol(FinalSizeControl)
+	sim.run() #Se corre la simulacion
+	sim.plot_all() # Se grafica I para la zona 0.
+	#sim.average_infected()
+	#print(average_infected.infected_average)
+	sim.plot_total_infected()
+	sim.plot_total_recovered()
+	#print(sim.evolution[:][2][-1])
+	#print(sim.total_recovered)
+	#sim.control_protocol.Itotal(N)
+	return sim
+
+
+
+def SIR_Homogeneo():
+	#parameteres
+	n = 6 #numero de parches
+	p = 0.5 # parametro de la red binomial
+	min_residential = 0.8 # diagonal de la matriz de mobilidad mayor a este numero
+	#vector de parametros para una zona
+	param = np.zeros(2)
+	param[0] = beta1 = 2.5
+	param[1] = gama1 = 1
+
+	#initial conditions para una zona
+	x = np.zeros(3)
+	S1 = x[0] = 2500.
+	I1 = x[1] = 0.0 
+	R1 = x[2] = 0.0
+	N  = [2500,3500,5000,4500,3000,1500]
 	P=MobilityNetwork() #Se crea la red de mobilidad
 	P.binomial(n,p,min_residential) #en este caso es una red binomial
 	
@@ -105,12 +153,17 @@ def SIR_Homogeneo():
 	params=sim.parameters
 	sim.set_simulation_time(80) #How many "days" to simulate 
 	FinalSizeControl=finalEpidemicSizeControl(params,P,N)
-	#print(FinalSizeControl.R_inf)
-	#print(FinalSizeControl.Thetas)
+	print(FinalSizeControl.R_inf)
+	print(FinalSizeControl.Thetas)
 	sim.set_control_protocol(FinalSizeControl)
 	sim.run() #Se corre la simulacion
 	sim.plot_all() # Se grafica I para la zona 0.
+	#sim.average_infected()
+	#print(average_infected.infected_average)
 	sim.plot_total_infected()
+	sim.plot_total_recovered()
+	#print(sim.evolution[:][2][-1])
+	#print(sim.total_recovered)
 	#sim.control_protocol.Itotal(N)
 	return sim
 
@@ -636,6 +689,7 @@ if (__name__ == '__main__'):
 	Simple_Simulation_Emsemble_SIR()
 	#MPI_simulations_ensemble()  # requiere MPI instalado : "mpiexec" Run using: "mpiexec -n <number_of_process> python programs.py" (n=8)
 	SIR_Homogeneo()
+	SIR_Homogeneo_Control()
 	#comparison_SimpleControl_NoControl()
 	#comparison_SimpleControl_NoControl_SameNetwork()
 	#MPI_control_comparison() # Run using: "mpiexec -n 4 python programs.py"

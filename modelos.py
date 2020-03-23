@@ -195,8 +195,8 @@ def SIR(yv,t,param,p,n,control):
 
    for i in range (0,n):
    
-      dS = -(beta[i]/W[i])*sum(p[i,:]*S)*sum(p[i,:]*I)
-      dI =  (beta[i]/W[i])*sum(p[i,:]*S)*sum(p[i,:]*I)-gamma[i]*I[i]
+      dS = -sum([(beta[k]/W[k])*(p[i,k]*S[i])*sum(p[:,k]*I) for k in range(n)])
+      dI =  sum([(beta[k]/W[k])*(p[i,k]*S[i])*sum(p[:,k]*I) for k in range(n)])-gamma[i]*I[i]
       dR =  gamma[i]*I[i]
       
       if i==0:
@@ -207,4 +207,52 @@ def SIR(yv,t,param,p,n,control):
       
    
 
+   return b
+
+
+def SIRControl(yv,t,param,p,n,control):
+   x = yv.reshape(n,3)
+
+   S = np.zeros(n) 
+   I = np.zeros(n)
+   R = np.zeros(n)
+   F = np.zeros(n)
+   N = np.zeros(n)
+   W = np.zeros(n)
+
+   beta  = np.zeros(n)
+   gamma = np.zeros(n)
+
+   j=0
+   z=0
+   for i in range (0,n): 
+      S[i] = x[i][0]
+      I[i] = x[i][1]
+      R[i] = x[i][2]
+      
+      N[i] = S[i] + I[i] + R[i]
+
+   if(control.observation_time(t)):
+         control.observe(x,t)
+   control.calculate_control(t)
+
+   for i in range (0,n):
+      control_params = control.get_control(i)
+      beta[i]  = param[i][0]*(1.-control_params[0])
+      gamma[i] = param[i][1]
+      W[i] = sum(N*p[:,i]) 
+      F[i] = I[i]/W[i]
+
+   for i in range (0,n):
+   
+      dS = -sum([(beta[k]/W[k])*(p[i,k]*S[i])*sum(p[:,k]*I) for k in range(n)])
+      dI =  sum([(beta[k]/W[k])*(p[i,k]*S[i])*sum(p[:,k]*I) for k in range(n)])-gamma[i]*I[i]
+      dR =  gamma[i]*I[i]
+      
+      if i==0:
+         b = np.array([dS,dI,dR])
+      else:
+         a = np.array([dS,dI,dR])
+         b = np.concatenate((b,a),axis=0)
+      
    return b

@@ -35,7 +35,7 @@ class controlProtocol:
 		self.VR=[]     #Vulnerability index (human)
 		self.TRv=[]    #vector Transmission idex
 		self.last_control_time = 0.
-		self.control_interval = 1.
+		self.control_interval = 1. 
 
 	def observe(self,y,t):
 		self.observations=y
@@ -100,66 +100,6 @@ class controlProtocol:
 		self.TRv.append((t, [sum(Rv[i,:]) for i in range(n)])) #vector transmission index (verificar)
 		return self.TRh[-1][1]
 
-		def I_tot(x, p, W, gamma, beta):
-			gamma=np.array(gamma)
-
-			x_next = np.zeros(len(x))
-			Q=np.zeros((len(x),len(x)))
-			for i in range(len(x)):
-				for j in range(len(x)):
-					Q[i][j]=np.sum((p[i][:]*p[j][:]*beta[:])/W[:])
-			Theta=np.zeros(len(x))	
-			for i in range(len(x)):
-				Theta[i]=np.sum((Q[i][:]/gamma[:])*x[:])
-				#print(Theta,'theta')
-			x_next=N-S*np.exp(-Theta)
-			#print(x_next,'xnext')
-			return (x_next,Theta)
-
-
-		x=np.ones(n)
-		R,Indice=I_tot(x, p, W, gamma, beta)
-		errorNumerico=1
-		err=.001
-		while(errorNumerico > err):
-			R_next,Indice = I_tot(R, p, W, gamma, beta)
-			errorNumerico = np.linalg.norm(R_next - R)
-			R=R_next
-		self.R_inf=R
-		self.Thetas=Indice
-		return (R,Indice)
-
-	
-	# def Theta(self):
-	# 	n=self.number_of_patches
-	# 	S=[]
-	# 	I=[]
-	# 	R=[]
-	# 	beta=[]
-	# 	gamma=[]
-	# 	W=[]
-	# 	N=[]
-	# 	for i in range(n):
-	# 		S.append(self.observations[i][0])
-	# 		I.append(self.observations[i][1])
-	# 		R.append(self.observations[i][2])
-	# 		beta.append(self.params[i][0])
-	# 		gamma.append(self.params[i][1])
-	# 		N.append(S[i] + I[i] + R[i])
-
-	# 	p=self.P_network.matrix
-	# 	for k in range(n):
-	# 		W.append(np.dot(N,p[:,k]))
-
-
-	# 	if self.R_inf==None: self.Itotal()
-
-	# 	for i in range(len(N)):
-	# 		P[i][j]=np.sum(p[i][:]*p[j][:]/W[:])
-	# 		Theta[i]=np.sum(P[i][:]*beta[i][:]/gamma[:])*self.R_inf[i]
-	
-	# 	return Theta
-
 
 	def set_observation_interval(self, dt):
 		self.observation_interval = dt
@@ -202,21 +142,60 @@ class randomControl(controlProtocol):
 		self.control = [[0.,0.]] * self.number_of_patches
 		self.control[random_patch] = [0.5,0.5] 
 
+
+#---------------------------------------------------------------------------------------------------------
+
 class finalEpidemicSizeControl(controlProtocol):
-	
 	def __init__(self,params,P_network,N):
 		super().__init__(params, P_network)
+		self.number_of_patches = len(params)
+		self.observations = [[0]*5]*self.number_of_patches
+		self.params = params
+		self.P_network = P_network
+		self.last_observation_time = None
+		self.observation_interval = 1.
+		self.control = [[0.,0.]]*self.number_of_patches
+		self.last_control_time = 0.
+		self.control_interval = 1. 
 		self.N=N #List (or vector) with the total population of the diferent patches
-		self.R_inf=None  # Tamano fina de la enfermedad en la red metapoblacional
+		self.Rinfi=[]
+		self.R_inf=[]  # Tamano fina de la enfermedad en la red metapoblacional
 		self.Thetas=[] # Indice R*
+
 		self.Itotal()
-		
-	def recalculate_control(self):
-		pass
+
+	def observe(self,x,t):
+		self.observations=x
+		self.last_observation_time=t
+		self.calculate_indices(t)
 	
-	def calculate_indices(self,t):
-		pass
+	def observation_time(self,t):
+		if(self.last_observation_time == None or (t - self.last_observation_time) > self.observation_interval):
+			return True
+		else:
+			return False
+			
+
+	def recalculate_control(self):
+		R_inf=self.R_inf
+		Rinf_max = max(R_inf)
+		max_transmition_patch = R.index(Rinf_max)
+		#if( TRh_max > 2.):
+		self.control = [[0.,0.]] * self.number_of_patches
+		self.control[max_transmition_patch] = [0.5,0.5]
+
+	def calculate_control(self,t):
+		if(t-self.last_control_time > self.control_interval):
+			self.recalculate_control()
 		
+	def get_control(self,i):
+		return self.control[i]
+		
+
+
+	def calculate_indices(self,t): #Aca no se nesecita pues son los indices de PLOS
+		pass
+		#Aca se van a calcular los indices para el SIR------------------------->		
 	def Itotal(self):
 		"""Calculates the Final size of the epidemic of each patch"""
 		n=self.number_of_patches
@@ -227,7 +206,7 @@ class finalEpidemicSizeControl(controlProtocol):
 		for i in range(n):
 			beta.append(self.params[i][0])
 			gamma.append(self.params[i][1])
-		beta=np.array(beta)
+		beta =np.array(beta)
 		gamma=np.array(gamma)
 
 		p=self.P_network.matrix
@@ -255,7 +234,47 @@ class finalEpidemicSizeControl(controlProtocol):
 				Q[i][j]=np.sum(p[i][:]*p[j][:]*(beta[:]/W[:]))
 		Theta=np.zeros((len(x)))
 		for i in range(len(x)):
-			Theta[i]=np.sum((Q[i][:]/gamma[:])*x[:])
+			Theta[i]=np.sum((Q[i][:]*x[:])/gamma[:])
 		x_next=N-N*np.exp(-Theta)
-		return (x_next,Theta)
+		return (x_next,Theta )
 
+	def set_observation_interval(self, dt):
+		self.observation_interval = dt
+		if(self.control_interval==None):
+			self.control_interval = dt
+		
+	def set_control_interval(self, dt):
+		self.control_interval = dt
+		if(self.observation_interval == None):
+			self.observation_interval=dt
+
+	def plot_Rinfindex(self, i):
+		plt.figure()
+		plt.xlabel('Tiempo')
+		plt.ylabel('R_inf')
+		plt.plot(self.time,self.evolution[i][1][:])
+		plt.show()
+		
+
+class noControl:
+	def __init__(self,default = 0):
+		self.default_control= [default,default]
+		
+	def observe(self,x,t):
+		pass
+
+	def observation_time(self,t):
+		return False
+		
+	def calculate_control(self,t):
+		pass
+		
+	def get_control(self,i):
+		return self.default_control
+
+class randomControl(controlProtocol):
+	
+	def recalculate_control(self):
+		random_patch = rnd.randint(0,self.number_of_patches-1)
+		self.control = [[0.,0.]] * self.number_of_patches
+		self.control[random_patch] = [0.5,0.5] 

@@ -24,6 +24,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from modelos import PLOSModel
 from modelos import SIR
+#from modelos import SIRControl
 from MobilityNetwork import MobilityNetwork
 from Control_protocol import controlProtocol
 from Control_protocol import noControl

@@ -179,7 +179,7 @@ class finalEpidemicSizeControl(controlProtocol):
 	def recalculate_control(self):
 		R_inf=self.R_inf
 		Rinf_max = max(R_inf)
-		max_transmition_patch = R_inf.index(Rinf_max)
+		max_transmition_patch = np.argmax(Rinf_max)
 		#if( TRh_max > 2.):
 		self.control = [[0.,0.]] * self.number_of_patches
 		self.control[max_transmition_patch] = [0.5,0.5]

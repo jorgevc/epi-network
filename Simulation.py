@@ -1,31 +1,31 @@
 #  Simulation.py
-#  
+#
 #  Copyright 2018 Jorge Velazquez Castro
-#  
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
-#  
-#  
+#
+#
 from scipy.integrate import odeint
 from scipy.integrate import solve_ivp
 import numpy as np
 import matplotlib.pyplot as plt
 from modelos import PLOSModel
 from MobilityNetwork import MobilityNetwork
-from control_protocol import controlProtocol
-from control_protocol import noControl
+from Control_protocol import controlProtocol
+from Control_protocol import noControl
 import copy
 
 class simulation:
@@ -42,16 +42,16 @@ class simulation:
           function representing the ODE of the dinamical system
         P : 2dim numpy array
           Conectivity matrix of the network
-        node : list of numpy arrays 
+        node : list of numpy arrays
           List of initial conditions of the patches(nodes).
         simulation_time : int
           final time in the corresponding units of the model parameters of the simulation
         control_protocol : controlProtocol object
           object representing the control protocol to be implemented (Default non control)
-    
+
     The following attributes are calculated and set after the simulation is runned with the 'run' procedure:
         time : numpy.array
-          vector of times where state of the system was computed 
+          vector of times where state of the system was computed
         evolution : 3 dimentional numpy array
           numpy array[node][equation][step time] giving the estate of the variable (equation) at a time step
         total_infected : numpy.array[i])
@@ -60,7 +60,7 @@ class simulation:
           Total recovered of the simulation at time steep i (sum of recovered of all patches) 3rd equation is assumed to be recovered
         runned_times : int
           Number of times the simulation has been run.
-        
+
     Methods
     -------
     add_one_patch_parameters(parameters):
@@ -83,85 +83,85 @@ class simulation:
 		self.total_susceptible = None
 		self.total_recovered = None
 		self.runned_times = 0
-		
+
 	def add_one_patch_parameters(self,parameters):
 		"""Adds one patch (sector) to the simulation with list of parameters given as the argument
-		
+
 		Parameters
 		----------
 		parameters : list or 1dim numpy array
 		   list of patch parameters
-		
+
 		Returns
 		-------
 		none
-		
+
 		"""
-		
+
 		self.parameters.append(list(parameters))
 		self.node.append([])
-		self.No_patches +=1 
-		
+		self.No_patches +=1
+
 	def add_many_patches_parameters(self,No_patches, parameters):
 		"""Adds many similar patches to the simulation
-		
+
 		Parameters
 		----------
 		No_parches : int
 		   number of patches to be added to the simulation
 		parameters : list of 1dim numpy array
 		   list of parameters of the patch. All patches will have this same parameters
-		
+
 		Returns
 		-------
 		none
-		
+
 		"""
-		
+
 		for i in range(No_patches):
 			self.add_one_patch_parameters(parameters)
-			
+
 	def set_initial_conditions_patch(self,i,Initial):
-		"""Sets the initial conditions of a specific patch 
-		
+		"""Sets the initial conditions of a specific patch
+
 		Parameters
 		----------
 		i : int
 			Number of patch
 		Initial : list or numpy array
 			list of values for the initial conditions of a single patch
-			
+
 		Returns
 		-------
 		none
-		
+
 		"""
-		
+
 		self.node[i] = np.array(Initial)
-		
+
 	def set_initial_conditions_all_patches(self,Initial):
 		"""Sets the same initial conditions for all the patches
-		
+
 		Parameters
 		----------
 		Initial : list or 1 dim numpy array
 		   List of initial conditions for a patch. This same conditions will be set for all patches
-		   
+
 		Returns
 		-------
 		none
-		
+
 		"""
-		
+
 		for i in range(self.No_patches):
 			self.set_initial_conditions_patch(i,Initial)
-			
+
 	def set_conectivity_network(self,P):
 		self.P=copy.deepcopy(P)
-		
+
 	def set_model(self,model):
 		self.model=model
-	
+
 	def set_simulation_time(self,time):
 		self.simulation_time=time
 
@@ -184,7 +184,7 @@ class simulation:
 		self.calculate_total_susceptible()
 		self.calculate_total_recovered()
 		self.runned_times += 1
-		
+
 	def set_control_protocol(self,control_protocol):
 		self.control_protocol = copy.deepcopy(control_protocol)
 
@@ -194,7 +194,7 @@ class simulation:
 		plt.ylabel('Infectados')
 		plt.plot(self.time,self.evolution[i][1][:])
 		plt.show()
-		
+
 	def plot_all(self):
 		plt.figure()
 		plt.xlabel('Tiempo')
@@ -202,22 +202,22 @@ class simulation:
 		for i in range(self.No_patches) :
 			plt.plot(self.time,self.evolution[i][1][:])
 		plt.show()
-	
+
 	def calculate_total_infected(self):
 		self.total_infected = self.evolution[0][1][:].copy()  #asumed 2nd equation is infected
 		for i in range(1,self.No_patches):
 			self.total_infected += self.evolution[i][1][:]
-			
+
 	def calculate_total_susceptible(self):
 		self.total_susceptible = self.evolution[0][0][:].copy()  #asumed 1st equation is susceptible
 		for i in range(1,self.No_patches):
 			self.total_susceptible += self.evolution[i][0][:]
-			
+
 	def calculate_total_recovered(self):
 		self.total_recovered = self.evolution[0][2][:].copy()  #asumed 3er ecuation is recovered
 		for i in range(1,self.No_patches):
 			self.total_recovered += self.evolution[i][2][:]
-	
+
 	def plot_total_infected(self):
 		if (self.total_infected is None ):
 			self.calculate_total_infected()
@@ -227,7 +227,7 @@ class simulation:
 		line = copy.copy(plt.plot(self.time,self.total_infected))
 		plt.show()
 		return line
-		
+
 	def plot_total_recovered(self):
 		if (self.total_recovered is None ):
 			self.calculate_total_recovered()
@@ -236,7 +236,7 @@ class simulation:
 		plt.ylabel('Total Recovered')
 		line = copy.copy(plt.plot(self.time,self.total_recovered))
 		plt.show()
-		return line 
+		return line
 
 if __name__ == '__main__':
 	#parameteres
@@ -248,20 +248,20 @@ if __name__ == '__main__':
 	param = np.zeros(5)
 	param[0] = beta1 = 0.67
 	param[1] = gama1 = 1./7.
-	param[2] = alfa1 =5 
-	param[3] = c1 =1000 
+	param[2] = alfa1 =5
+	param[3] = c1 =1000
 	param[4] = mu1 = 1./8.
 	#initial conditions para una zona
 	y = np.zeros(5)
 	S1 = y[0] = 1500.
-	I1 = y[1] = 0.0 
+	I1 = y[1] = 0.0
 	R1 = y[2] = 0.0
-	Sv1 = y[3] = 200 
+	Sv1 = y[3] = 200
 	Iv1 = y[4] = 0.0
-	
+
 	P=MobilityNetwork() #Se crea la red de mobilidad
 	P.binomial(n,p,min_residential) #en este caso es una red binomial
-	
+
 	sim = simulation() #se crea objeto simulacion
 	sim.add_many_patches_parameters(n,param)  # se agregan n zonas con parametros dados en param
 	sim.set_conectivity_network(P) # se agrega la red de conectividad P
@@ -269,15 +269,15 @@ if __name__ == '__main__':
 	y[4]=y[4]+1. # Se agrega 1 infectado mosquito a las condiciones iniciales
 	sim.set_initial_conditions_patch(1,y) #Se establece esta condicion inicial en la zona 1
 	sim.set_model(PLOSModel) #Se establece el modelo usado en PLOS como modelo para hacer la simulacion
-	
+
 	params=sim.parameters
 	ControlSimple=controlProtocol(params,P)
 	ControlSimple.set_observation_interval(5.)
-	
+
 	sim.set_control_protocol(ControlSimple)
 	sim.run() #Se corre la simulacion
-	
+
 	sim.plot_total_infected()
 	sim.plot_total_recovered()
-	
+
 	#sim.plot_all() # Se grafica I para la zona 0.

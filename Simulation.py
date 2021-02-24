@@ -83,6 +83,12 @@ class simulation:
 		self.total_susceptible = None
 		self.total_recovered = None
 		self.runned_times = 0
+		self.patch_dimention = 0 #dimention of de system of a single patch
+		self.infected_variable = 1
+		self.recovered_variable = 2
+
+	def reset(self):
+		self.__init__()
 
 	def add_one_patch_parameters(self,parameters):
 		"""Adds one patch (sector) to the simulation with list of parameters given as the argument
@@ -138,6 +144,8 @@ class simulation:
 		"""
 
 		self.node[i] = np.array(Initial)
+		if self.patch_dimention == 0:
+			self.patch_dimention = self.node[i].shape[0]
 
 	def set_initial_conditions_all_patches(self,Initial):
 		"""Sets the same initial conditions for all the patches
@@ -168,6 +176,7 @@ class simulation:
 	def run(self):
 		n=self.No_patches
 		p = self.P.matrix
+		dim = self.patch_dimention
 		control = self.control_protocol
 		parameters = self.parameters
 		self.time = np.linspace(0.0,self.simulation_time,self.simulation_time*10)
@@ -179,11 +188,12 @@ class simulation:
 		initial = np.array(self.node).flatten()
 		#solution = odeint(system,initial,self.time)
 		solution = np.array(solve_ivp(system, [min(self.time), max(self.time)], initial, t_eval=self.time).y).T
-		self.evolution = [[solution[:,node*5+column] for column in range(5)] for node in range(n)]
+		self.evolution = [[solution[:,node*dim+column] for column in range(dim)] for node in range(n)]
 		self.calculate_total_infected()
 		self.calculate_total_susceptible()
 		self.calculate_total_recovered()
 		self.runned_times += 1
+		return self
 
 	def set_control_protocol(self,control_protocol):
 		self.control_protocol = copy.deepcopy(control_protocol)
@@ -204,9 +214,10 @@ class simulation:
 		plt.show()
 
 	def calculate_total_infected(self):
-		self.total_infected = self.evolution[0][1][:].copy()  #asumed 2nd equation is infected
+		infected = self.infected_variable
+		self.total_infected = self.evolution[0][infected][:].copy()  #asumed 2nd equation is infected
 		for i in range(1,self.No_patches):
-			self.total_infected += self.evolution[i][1][:]
+			self.total_infected += self.evolution[i][infected][:]
 
 	def calculate_total_susceptible(self):
 		self.total_susceptible = self.evolution[0][0][:].copy()  #asumed 1st equation is susceptible
@@ -214,9 +225,10 @@ class simulation:
 			self.total_susceptible += self.evolution[i][0][:]
 
 	def calculate_total_recovered(self):
-		self.total_recovered = self.evolution[0][2][:].copy()  #asumed 3er ecuation is recovered
+		recovered = self.recovered_variable
+		self.total_recovered = self.evolution[0][recovered][:].copy()  #asumed 3er ecuation is recovered
 		for i in range(1,self.No_patches):
-			self.total_recovered += self.evolution[i][2][:]
+			self.total_recovered += self.evolution[i][recovered][:]
 
 	def plot_total_infected(self):
 		if (self.total_infected is None ):

@@ -7,6 +7,8 @@ import matplotlib.lines as ml
 
 
 class simulationsEnsemble:
+	__slots__=('simulations','susceptible_average','infected_average',\
+	'recovered_average','number_of_simulations','max_infected')
 
 	def __init__(self):
 		self.simulations = []

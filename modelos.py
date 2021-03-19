@@ -116,23 +116,26 @@ def SEAIRD(yv,t,param,p,n,control):
     D = y[:,5]
     N = S + E + A + I + R
     #params
-    beta = np.array(param)[:,0]
+    if (t>15.):
+        tau=55.
+        Ctr = np.exp(-(t-15.)/tau)
+    else:
+        Ctr = 1.
+
+    beta = np.array(param)[:,0]*Ctr
     sigma = np.array(param)[:,1]
     gamma = np.array(param)[:,2]
     mu = np.array(param)[:,3]
     m = np.array(param)[:,4]
-    eta=0.5
-    chi=0.5
+    eta= np.array(param)[:,5]
 
-    F=I.dot(p)
+    F_I=I.dot(p)
     F_A=A.dot(p)
     F_E=E.dot(p)
     W=N.dot(p)
-    f=F/W
-    f_A=F_A/W
-    f_E=F_E/W
-    dS =  - S*(p.dot(beta*f)) - S*(p.dot((beta*eta)*f_A)) - S*(p.dot((beta*chi)*f_E))
-    dE = S*(p.dot(beta*f)) +  S*(p.dot((beta*eta)*f_A)) - sigma*E
+
+    dS = -beta*S*p.dot((eta*F_I + F_A + F_E)/W)
+    dE = beta*S*p.dot((eta*F_I + F_A + F_E)/W) - sigma*E
     dA = m*sigma*E - gamma*A
     dI = (1-m)*sigma*E-gamma*I
     dR = gamma*A + gamma*(1-mu)*I

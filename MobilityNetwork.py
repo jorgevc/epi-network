@@ -119,9 +119,12 @@ class MobilityNetwork:
 		self.adjacency_network=nx.gnm_random_graph(n,m)
 		self.weight_edges( min_residential)
 
-	def from_adjacency_matrix(self,file, min_residential):
-
-		Adj = np.loadtxt(file)
+	def from_adjacency_matrix(self,adjacency_m, min_residential):
+		if(isinstance(adjacency_m, str)):
+			Adj = np.loadtxt(adjacency_m)
+		else:
+			Adj = adjacency_m
+			
 		self.adjacency_network=nx.from_numpy_matrix(Adj)
 		return self.weight_edges(min_residential)
 

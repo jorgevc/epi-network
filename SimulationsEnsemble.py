@@ -76,9 +76,10 @@ class simulationsEnsemble:
 		return recovered_average.copy()
 
 	def calculate_max_infected(self):
-		if (self.infected_average == None):
+		if (self.infected_average is None):
 			self.average_infected()
 		self.max_infected=max(self.infected_average)
+		return self.max_infected.copy()
 
 	def MPI_run_all(self):
 		import  mpi4py

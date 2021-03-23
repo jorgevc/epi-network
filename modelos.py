@@ -87,15 +87,14 @@ def PLOSModel(yv,t,param,p,n,control):
 
    return b
 
-def SEAIRD(yv,t,param,p,n,control):
-    y = yv.reshape(n,6)
+def SEAIR(yv,t,param,p,n,control):
+    y = yv.reshape(n,5)
 
     S = np.zeros(n)
     E = np.zeros(n)
     A = np.zeros(n)
     I = np.zeros(n)
     R = np.zeros(n)
-    D = np.zeros(n)
     N = np.zeros(n)
     W = np.zeros(n)
     F = np.zeros(n)
@@ -113,32 +112,27 @@ def SEAIRD(yv,t,param,p,n,control):
     A = y[:,2]
     I = y[:,3]
     R = y[:,4]
-    D = y[:,5]
+
     N = S + E + A + I + R
     #params
     beta = np.array(param)[:,0]
     sigma = np.array(param)[:,1]
     gamma = np.array(param)[:,2]
-    mu = np.array(param)[:,3]
-    m = np.array(param)[:,4]
-    eta=0.5
-    chi=0.5
+    m = np.array(param)[:,3]
+    eta= np.array(param)[:,4]
 
-    F=I.dot(p)
+    F_I=I.dot(p)
     F_A=A.dot(p)
     F_E=E.dot(p)
     W=N.dot(p)
-    f=F/W
-    f_A=F_A/W
-    f_E=F_E/W
-    dS =  - S*(p.dot(beta*f)) - S*(p.dot((beta*eta)*f_A)) - S*(p.dot((beta*chi)*f_E))
-    dE = S*(p.dot(beta*f)) +  S*(p.dot((beta*eta)*f_A)) - sigma*E
-    dA = m*sigma*E - gamma*A
-    dI = (1-m)*sigma*E-gamma*I
-    dR = gamma*A + gamma*(1-mu)*I
-    dD = gamma*mu*I
 
-    return np.array([dS, dE, dA, dI, dR, dD]).T.flatten()
+    dS = - beta * S * p.dot( (F_E + F_A + eta*F_I)/W  )
+    dE = beta * S * p.dot( (F_E + F_A + eta*F_I)/W  ) - sigma*E
+    dA = m*sigma*E - gamma*A
+    dI = (1.-m)*sigma*E-gamma*I
+    dR = gamma*(A + I)
+
+    return np.array([dS, dE, dA, dI, dR]).T.flatten()
 
 def NPatch2(yv,param,p,n):
    y = yv.reshape(n,5)

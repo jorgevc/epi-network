@@ -22,10 +22,9 @@ from scipy.integrate import odeint
 from scipy.integrate import solve_ivp
 import numpy as np
 import matplotlib.pyplot as plt
-from modelos import PLOSModel
-from MobilityNetwork import MobilityNetwork
-from Control_protocol import controlProtocol
-from Control_protocol import noControl
+from .MobilityNetwork import MobilityNetwork
+from .Control_protocol import controlProtocol
+from .Control_protocol import noControl
 import copy
 
 class simulation:
@@ -256,6 +255,7 @@ class simulation:
 		return line
 
 if __name__ == '__main__':
+	from .modelos import PLOSModel
 	#parameteres
 
 	n = 6 #numero de parches

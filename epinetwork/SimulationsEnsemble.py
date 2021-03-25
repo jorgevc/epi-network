@@ -1,7 +1,6 @@
-from Simulation import simulation
+from .Simulation import simulation
 import copy
-from modelos import PLOSModel
-from MobilityNetwork import MobilityNetwork
+from .MobilityNetwork import MobilityNetwork
 import matplotlib.pyplot as plt
 import matplotlib.lines as ml
 
@@ -173,6 +172,7 @@ class simulationsEnsemble:
 		return ax
 
 if __name__ == '__main__':
+	from .modelos import PLOSModel
 	#numero de simulaciones en el ensemble
 	number_of_simulations = 10
 

@@ -140,6 +140,62 @@ def SEAIR(yv,t,param,p,n,control):
 
     return np.array([dS, dE, dA, dI, dR]).T.flatten()
 
+def SEAIRD(yv,t,param,p,n,control):
+    y = yv.reshape(n,6)
+
+    S = np.zeros(n)
+    E = np.zeros(n)
+    A = np.zeros(n)
+    I = np.zeros(n)
+    R = np.zeros(n)
+    D = np.zeros(n)
+    N = np.zeros(n)
+    W = np.zeros(n)
+    F = np.zeros(n)
+    f = np.zeros(n)
+
+    #params:
+    beta = np.zeros(n)
+    sigma = np.zeros(n)
+    gamma = np.zeros(n)
+    mu = np.zeros(n)
+    m = np.zeros(n)
+
+    S = y[:,0]
+    E = y[:,1]
+    A = y[:,2]
+    I = y[:,3]
+    R = y[:,4]
+    D = y[:,5]
+    N = S + E + A + I + R
+    #params
+    if (t>15.):
+        tau=55.
+        Ctr = np.exp(-(t-15.)/tau)
+    else:
+        Ctr = 1.
+
+    beta = np.array(param)[:,0]*Ctr
+    sigma = np.array(param)[:,1]
+    gamma = np.array(param)[:,2]
+    mu = np.array(param)[:,3]
+    m = np.array(param)[:,4]
+    eta= np.array(param)[:,5]
+
+    F_I=I.dot(p)
+    F_A=A.dot(p)
+    F_E=E.dot(p)
+    W=N.dot(p)
+
+    dS = -beta*S*p.dot((eta*F_I + F_A + F_E)/W)
+    dE = beta*S*p.dot((eta*F_I + F_A + F_E)/W) - sigma*E
+    dA = m*sigma*E - gamma*A
+    dI = (1-m)*sigma*E-gamma*I
+    dR = gamma*A + gamma*(1-mu)*I
+    dD = gamma*mu*I
+
+    return np.array([dS, dE, dA, dI, dR, dD]).T.flatten()
+
 def NPatch2(yv,param,p,n):
    y = yv.reshape(n,5)
 # regresa la solucion del sistema de ecuaciones diferenciales con la condicion (beta[i]*Sh[i]*sum(p[i,:]*F)/sigma[i])>1 para cada i

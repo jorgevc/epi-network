@@ -115,13 +115,13 @@ def SEAIR(yv,t,param,p,n,control):
 
     N = S + E + A + I + R
     #params
-    if (t>15.):
-        tau=55.
-        Ctr = np.exp(-(t-15.)/tau)
-    else:
-        Ctr = 1.
+    #if (t>15.):
+    #    tau=55.
+    #    Ctr = np.exp(-(t-15.)/tau)
+    #else:
+    #    Ctr = 1.
 
-    beta = np.array(param)[:,0]*Ctr
+    beta = np.array(param)[:,0] # *Ctr se uso control en artículo SMF
     sigma = np.array(param)[:,1]
     gamma = np.array(param)[:,2]
     m = np.array(param)[:,3]

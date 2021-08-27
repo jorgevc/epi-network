@@ -141,7 +141,7 @@ class simulationsEnsemble:
 		with open(file_name + ".SimulationsEnsemble", "wb") as f:
 			pickle.dump(ensemble, f, pickle.HIGHEST_PROTOCOL)
 
-	def plot_infected_average(self, axes=None):
+	def plot_infected_average(self, axes=None, relative=False):
 		if (self.infected_average is None ):
 			self.average_infected()
 		I_average = self.infected_average
@@ -151,12 +151,23 @@ class simulationsEnsemble:
 		else:
 			ax = axes
 		ax.set_xlabel('Time')
-		ax.set_ylabel('Infected (simulation average)')
-		ax.plot(time,I_average)
+		if (relative==True):
+			if (self.recovered_average is None ):
+				self.average_recovered()
+			R_ini=self.recovered_average[0]
+			if (self.susceptible_average is None):
+				self.average_suseptible()
+			S_ini=self.susceptible_average[0]
+			I_ini=self.infected_average[0]
+			ax.set_ylabel('% of Infected Population')
+			ax.plot(time,(I_average/(R_ini + S_ini+I_ini))*100.)
+		else:
+			ax.set_ylabel('Infected (simulation average)')
+			ax.plot(time,I_average)
 		#plt.show()
 		return ax
 
-	def plot_recovered_average(self, axes=None):
+	def plot_recovered_average(self, axes=None, relative=False):
 		if (self.recovered_average is None ):
 			self.average_recovered()
 		R_average = self.recovered_average
@@ -166,8 +177,19 @@ class simulationsEnsemble:
 		else:
 			ax = axes
 		ax.set_xlabel('Time')
-		ax.set_ylabel('Recovered (simulation average)')
-		ax.plot(time,R_average)
+		if (relative==True):
+			if (self.infected_average is None ):
+				self.average_infected()
+			I_ini=self.infected_average[0]
+			if (self.susceptible_average is None):
+				self.average_suseptible()
+			S_ini=self.susceptible_average[0]
+			R_ini=self.recovered_average[0]
+			ax.set_ylabel('Recovered (% population)')
+			ax.plot(time,(R_average/(R_ini + S_ini+I_ini))*100.)
+		else:
+			ax.set_ylabel('Recovered (simulation average)')
+			ax.plot(time,R_average)
 		#plt.show()
 		return ax
 

@@ -75,7 +75,8 @@ class controlProtocol:
 		mu=[]
 		W=[]
 		Nh=[]
-		for i in range(n):
+
+		for i in range(n): 		# i corre sobre los parches
 			Sh.append(self.observations[i][0])
 			Ih.append(self.observations[i][1])
 			Rh.append(self.observations[i][2])
@@ -140,3 +141,38 @@ class randomControl(controlProtocol):
 		random_patch = rnd.randint(0,self.number_of_patches-1)
 		self.control = [[0.,0.]] * self.number_of_patches
 		self.control[random_patch] = [0.5,0.5]
+
+class IndexBasedControl:
+	def __init__(self,Model):
+		self.observation = None
+		self.last_observation_time = None
+		self.observation_interval = 1.
+		self.indices = None
+		self.get_indices = Model.get_indices #get_indices should be implemented in model class it should receive the state y of the system
+		self.control = None
+		self.number_of_patches = Model.number_of_patches
+
+	def observe(self,y,t):
+		self.observation=y.copy()
+		self.last_observation_time=t
+		self.indices = self.get_indices(self.observation)
+
+	def observation_time(self,t):
+		if(self.last_observation_time == None or (t - self.last_observation_time) > self.observation_interval):
+			return True
+		else:
+			return False
+
+	def recalculate_control(self):
+		Index_of_max = max(self.indices)
+		patch_index = self.indices(Index_of_max)
+		self.control = [[0.]] * self.number_of_patches
+		self.control[patch_index] = [1.]
+
+	def calculate_control(self,t):
+		if(t-self.last_control_time > self.control_interval):
+			self.recalculate_control()
+		return self.control
+
+	def get_control(self,i):
+		return self.control[i]

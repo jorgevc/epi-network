@@ -26,6 +26,7 @@ from .MobilityNetwork import MobilityNetwork
 from .Control_protocol import controlProtocol
 from .Control_protocol import noControl
 import copy
+import inspect
 
 class simulation:
 	"""Class simulation represents a single simulation of a epidemic
@@ -170,22 +171,26 @@ class simulation:
 		self.P=copy.deepcopy(P)
 
 	def set_model(self,model):
-		self.model=model
+		if isinstance(model,Model):
+			self.model = model
+		else:
+			n=self.No_patches
+			p = self.P.matrix
+			control = self.control_protocol
+			parameters = self.parameters
+			def system(t,estate):
+				return model(estate,t,parameters,p,n,control)
+			self.model.system=system
 
 	def set_simulation_time(self,time):
 		self.simulation_time=time
 
 	def run(self):
-		n=self.No_patches
-		p = self.P.matrix
 		dim = self.patch_dimention
-		control = self.control_protocol
-		parameters = self.parameters
 		self.time = np.linspace(0.0,self.simulation_time,self.simulation_time*10)
 
-		#def system(estate,t):
-		def system(t,estate):
-			return self.model(estate,t,parameters,p,n,control)
+		#system(t,yv):
+		system = self.model.system
 
 		initial = np.array(self.node).flatten()
 		#solution = odeint(system,initial,self.time)

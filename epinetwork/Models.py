@@ -1,0 +1,96 @@
+#  control_protocol.py
+#
+#  Copyright 2018 Jorge Velazquez Castro
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
+#
+#
+
+import numpy as np
+
+class Model:
+    def system(self,t,yv):
+        pass
+
+class VectorBorne:
+
+    def __init__(self,param,p,n,control): #parameter, network, number of patches, conctrol class
+        self.number_of_variables = 5
+        self.number_of_patches = n
+        self.p = p
+        self.control = control
+        self.final_size_presition = 0.1
+        self.final_size_max_iterations = 100
+        self.beta_h = np.array(param)[:,0]
+        self.gamma = np.array(param)[:,1]
+        self.beta_v = np.array(param)[:,2]
+        self.mu_v = np.array(param)[:,3]
+
+    def system(self,t,yv):
+        y = yv.reshape(self.number_of_patches,self.number_of_variables)
+
+        S = y[:,0]
+        I = y[:,1]
+        R = y[:,2]
+        V = y[:,3]
+        W = y[:,4]
+
+        N = S + I + R
+        Nv = V + W
+
+        P = N.dot(self.p)
+        F_I = p.dot(W/P)
+        F_V = I.dot(self.p)
+
+        dS = - self.beta_h * S * F_I
+        dI =  self.beta_h * S * F_I - self.gamma * I
+        dR = self.gamma * I
+        dV = self.mu_v * Nv - self.beta_v * V * F_V/P - self.mu_v * V
+        dW = self.beta_v * V * F_V/P - self.mu_v * W
+
+        return np.array([dS, dI, dR, dV, dW ]).T.flatten()
+
+    def local_final_size(self,N,S,Nv):
+        P = N.dot(self.p)
+        b = p.dot(1./P)
+        a = (self.beta_h * self.beta_v * Nv * b)/(self.gamma * self.mu_v * P)
+        def f(x):
+            tau = a * x.dot(p)
+            return N - S*np.exp(-tau)
+
+        err=1000
+        it=0
+        R_infty = f(np.ones(len(N)))
+        while (err>self.final_size_presition or it < self.final_size_max_iterations):
+            R_infty_next = f(R_infty)
+            err = np.max(np.abs(R_infty_next - R_infty))
+            it += 1
+            R_infty = R_infty_next
+
+        return R_infty
+
+    def get_indices(self, y):
+
+        S = y[:,0]
+        I = y[:,1]
+        R = y[:,2]
+        V = y[:,3]
+        W = y[:,4]
+
+        N = S + I + R
+        Nv = V + W
+
+        return self.local_final_size(N,N,Nv)

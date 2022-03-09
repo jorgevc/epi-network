@@ -23,6 +23,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random as rand
 
+class noMobility:
+	def __init__(self,n=1):
+		self.adjacency_network = nx.empty_graph(n, create_using=nx.DiGraph)
+		for i in self.adjacency_network.nodes()
+			self.adjacency_network.add_edge(i,i)
+		self.matrix = nx.to_numpy_matrix(self.adjacency_network)
+		self.network = self.adjacency_network.copy()
 
 class MobilityNetwork:
 
@@ -124,7 +131,7 @@ class MobilityNetwork:
 			Adj = np.loadtxt(adjacency_m)
 		else:
 			Adj = adjacency_m
-			
+
 		self.adjacency_network=nx.from_numpy_matrix(Adj)
 		return self.weight_edges(min_residential)
 

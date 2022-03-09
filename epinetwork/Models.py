@@ -20,24 +20,51 @@
 #
 
 import numpy as np
+from Control_protocol import noControl
+from MobilityNetwork import noMobility
 
 class Model:
+    __init__(self,n=0,params = None , network=None, control = noControl())
+     #Number of patches, parameter of a patch, mobility network, conctrol class
+    self.number_of_variables = 0
+    self.number_of_patches = n
+    if (network is None):
+        self.p = noMobility(n)
+    else:
+        if isinstance(network,type):
+            self.p = network(n)
+        else:
+            self.p = network
+            self.number_of_patches = network.network.number_of_nodes()
+    self.control = control
+    self.number_of_patches = n
+    self.params = params
+
+
     def system(self,t,yv):
         pass
 
-class VectorBorne:
+class VectorBorne(Model):
 
-    def __init__(self,param,p,n,control): #parameter, network, number of patches, conctrol class
+    def __init__(self,n=1,params = np.full((4),None) , network=None, control = noControl()):
+         #Number of patches, parameter of a patch, mobility network, conctrol class
         self.number_of_variables = 5
         self.number_of_patches = n
-        self.p = p
+        if (network is None):
+            self.p = noMobility(n)
+        else:
+            if isinstance(network,type):
+                self.p = network(n)
+            else:
+                self.p = network
+                self.number_of_patches = network.network.number_of_nodes()
         self.control = control
         self.final_size_presition = 0.1
         self.final_size_max_iterations = 100
-        self.beta_h = np.array(param)[:,0]
-        self.gamma = np.array(param)[:,1]
-        self.beta_v = np.array(param)[:,2]
-        self.mu_v = np.array(param)[:,3]
+        self.beta_h = np.full((self.number_of_patches),params[0])
+        self.gamma = np.full((self.number_of_patches),params[1])
+        self.beta_v = np.full((self.number_of_patches),params[2])
+        self.mu_v = np.full((self.number_of_patches),params[3])
 
     def system(self,t,yv):
         y = yv.reshape(self.number_of_patches,self.number_of_variables)
@@ -51,9 +78,9 @@ class VectorBorne:
         N = S + I + R
         Nv = V + W
 
-        P = N.dot(self.p)
+        P = N.dot(self.p.matrix)
         F_I = p.dot(W/P)
-        F_V = I.dot(self.p)
+        F_V = I.dot(self.p.matrix)
 
         dS = - self.beta_h * S * F_I
         dI =  self.beta_h * S * F_I - self.gamma * I
@@ -62,6 +89,21 @@ class VectorBorne:
         dW = self.beta_v * V * F_V/P - self.mu_v * W
 
         return np.array([dS, dI, dR, dV, dW ]).T.flatten()
+
+    def  set_patches_params(self,params,No_patches=None):
+        if (No_patches == None) :
+            n = self.number_of_patches
+        else :
+            n = No_patches
+            if (self.number_of_patches != n):
+                self.number_of_patches = n
+                print("Caution : Number of patches has changed")
+
+        self.beta_h = np.full((n),params[0])
+        self.gamma = np.full((n),params[1])
+        self.beta_v = np.full((n),params[2])
+        self.mu_v = np.full((n),params[3])
+
 
     def local_final_size(self,N,S,Nv):
         P = N.dot(self.p)

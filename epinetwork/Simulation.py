@@ -27,6 +27,7 @@ from .Control_protocol import controlProtocol
 from .Control_protocol import noControl
 import copy
 import inspect
+from Models import Model
 
 class simulation:
 	"""Class simulation represents a single simulation of a epidemic
@@ -67,17 +68,18 @@ class simulation:
        Adds one patch (sector) to the simulation with list of parameters given as the argument
     """
 
-	__slots__=('No_patches','parameters','node','time','model','P','evolution',\
+	__slots__=('No_patches','parameters','patch_dimention','node','time','model','P','evolution',\
 	'control_protocol','simulation_time','total_infected','total_susceptible',\
-	'total_recovered','runned_times','patch_dimention','infected_variable',\
+	'total_recovered','runned_times','infected_variable',\
 	'recovered_variable')
-	def __init__(self):
+	def __init__(self, model=Model()):
 		#parameteres
-		self.No_patches = 0 #numero de parches
+		self.No_patches = model.number_of_patches #numero de parches
 		self.parameters = []
-		self.node = []
+		self.patch_dimention = model.number_of_variables #dimention of de system of a single patch
+		self.node = np.zeros((self.No_patches,self.patch_dimention))
 		self.time = []
-		self.model = None
+		self.model = model
 		self.P = None
 		self.evolution = None
 		self.control_protocol = noControl()
@@ -86,7 +88,6 @@ class simulation:
 		self.total_susceptible = None
 		self.total_recovered = None
 		self.runned_times = 0
-		self.patch_dimention = 0 #dimention of de system of a single patch
 		self.infected_variable = 1
 		self.recovered_variable = 2
 
@@ -106,6 +107,8 @@ class simulation:
 		none
 
 		"""
+
+		#To do: IMplement with model class
 
 		self.parameters.append(list(parameters))
 		self.node.append([])

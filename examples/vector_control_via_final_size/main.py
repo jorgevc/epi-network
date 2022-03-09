@@ -6,7 +6,7 @@ def main():
     #parameteres
 
 	n = 6 #numero de parches
-	p = 0.5 # parametro de la red binomial
+	b = 0.5 # parametro de la red binomial
 	min_residential = 0.8 # diagonal de la matriz de mobilidad mayor a este numero
 	#vector de parametros para una zona
 	param = np.zeros(5)
@@ -24,16 +24,20 @@ def main():
 
 
     P = MobilityNetwork()
-    P.binomial(n,p,min_residential)
+    P.binomial(n,b,min_residential)
 
-    sim = simulation()
-    sim.add_many_patches_parameters(n,param)
-    sim.set_conectivity_network(P)
+    vectorModel = VectorBorne(network=P)
+    vectorModel.set_patches_params(param)
+
+    sim = simulation(vectorModel)
     sim.set_initial_conditions_all_patches(y)
     y[1]=y[1]+1. # Se agrega 1 infectado mosquito a las condiciones iniciales
 	sim.set_initial_conditions_patch(1,y) #Se establece esta condicion inicial en la zona 1
-	sim.set_model( .......) #Se establece el modelo usado en PLOS como modelo para hacer la simulacion
 	sim.set_simulation_time(80) #How many "days" to simulate
+    sim.run() #Se corre la simulacion
+
+	sim.plot_total_infected()
+	sim.plot_total_recovered()
 
 
 

@@ -20,32 +20,37 @@
 #
 
 import numpy as np
-from Control_protocol import noControl
-from MobilityNetwork import noMobility
+from .Control_protocol import noControl
+from .MobilityNetwork import noMobility
+from .Control_protocol import Protocol
 
 class Model:
-    __init__(self,n=0,params = None , network=None, control = noControl())
+    def __init__(self,n=0, params = None , network=None, control = noControl()):
      #Number of patches, parameter of a patch, mobility network, conctrol class
-    self.number_of_variables = 0
-    self.number_of_patches = n
-    if (network is None):
-        self.p = noMobility(n)
-    else:
-        if isinstance(network,type):
-            self.p = network(n)
+        self.number_of_variables = 0
+        self.number_of_patches = n
+        if (network is None):
+            self.p = noMobility(n)
         else:
-            self.p = network
-            self.number_of_patches = network.network.number_of_nodes()
-    self.control = control
-    self.number_of_patches = n
-    self.params = params
+            if isinstance(network,type):
+                self.p = network(n)
+            else:
+                self.p = network
+                self.number_of_patches = network.network.number_of_nodes()
+        self.control = control
+        self.params = params
 
 
     def system(self,t,yv):
         pass
 
-class VectorBorne(Model):
+    def set_control_protocol(self,control):
+        if isinstance(control,Protocol):
+            self.control = control
+        else:
+            self.control = control(self)
 
+class VectorBorne(Model):
     def __init__(self,n=1,params = np.full((4),None) , network=None, control = noControl()):
          #Number of patches, parameter of a patch, mobility network, conctrol class
         self.number_of_variables = 5
@@ -58,7 +63,10 @@ class VectorBorne(Model):
             else:
                 self.p = network
                 self.number_of_patches = network.network.number_of_nodes()
-        self.control = control
+        if isinstance(control,Protocol):
+            self.control = control
+        else:
+            self.control = control(self)
         self.final_size_presition = 0.1
         self.final_size_max_iterations = 100
         self.beta_h = np.full((self.number_of_patches),params[0])
@@ -79,14 +87,16 @@ class VectorBorne(Model):
         Nv = V + W
 
         P = N.dot(self.p.matrix)
-        F_I = p.dot(W/P)
+        F_I = self.p.matrix.dot(W/P)
         F_V = I.dot(self.p.matrix)
+
+        u = self.control.get_control(y,t)
 
         dS = - self.beta_h * S * F_I
         dI =  self.beta_h * S * F_I - self.gamma * I
         dR = self.gamma * I
-        dV = self.mu_v * Nv - self.beta_v * V * F_V/P - self.mu_v * V
-        dW = self.beta_v * V * F_V/P - self.mu_v * W
+        dV = self.mu_v * Nv - self.beta_v * V * F_V/P - self.mu_v * (1.-u[:,0]) * V
+        dW = self.beta_v * V * F_V/P - self.mu_v * (1.-u[:,0]) * W
 
         return np.array([dS, dI, dR, dV, dW ]).T.flatten()
 

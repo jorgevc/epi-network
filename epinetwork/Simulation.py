@@ -27,7 +27,7 @@ from .Control_protocol import controlProtocol
 from .Control_protocol import noControl
 import copy
 import inspect
-from Models import Model
+from .Models import Model
 
 class simulation:
 	"""Class simulation represents a single simulation of a epidemic
@@ -171,7 +171,7 @@ class simulation:
 			self.set_initial_conditions_patch(i,Initial)
 
 	def set_conectivity_network(self,P):
-		self.P=copy.deepcopy(P)
+		self.P=P
 
 	def set_model(self,model):
 		if isinstance(model,Model):
@@ -190,6 +190,7 @@ class simulation:
 
 	def run(self):
 		dim = self.patch_dimention
+		n = self.No_patches
 		self.time = np.linspace(0.0,self.simulation_time,self.simulation_time*10)
 
 		#system(t,yv):

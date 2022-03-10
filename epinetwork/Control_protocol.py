@@ -22,7 +22,48 @@
 import numpy as np
 import random as rnd
 
-class controlProtocol:
+class Protocol:
+	def __init__(self,params,P_network):
+		self.observations = None
+		self.last_observation_time = None
+		self.observation_interval = 1.
+		self.control = None
+		self.last_control_time = 0.
+		self.control_interval = 1.
+
+	def observe(self,y,t):
+		self.observations=y.copy()
+		self.last_observation_time=t
+
+	def observation_time(self,t):
+		if(self.last_observation_time == None or (t - self.last_observation_time) > self.observation_interval):
+			return True
+		else:
+			return False
+
+	def calculate_control(self,t):
+		if(t-self.last_control_time > self.control_interval):
+			self.recalculate_control()
+		return self.control
+
+	def recalculate_control(self):
+		pass
+
+	def get_control(self,i):
+		return self.control[i]
+
+	def set_observation_interval(self, dt):
+		self.observation_interval = dt
+		if(self.control_interval==None):
+			self.control_interval = dt
+
+	def set_control_interval(self, dt):
+		self.control_interval = dt
+		if(self.observation_interval == None):
+			self.observation_interval=dt
+
+
+class controlProtocol(Protocol):
 	def __init__(self,params,P_network):
 		self.number_of_patches = len(params)
 		self.observations = [[0]*5]*self.number_of_patches
@@ -38,15 +79,9 @@ class controlProtocol:
 		self.control_interval = 1.
 
 	def observe(self,y,t):
-		self.observations=y
+		self.observations=y.copy()
 		self.last_observation_time=t
 		self.calculate_indices(t)
-
-	def observation_time(self,t):
-		if(self.last_observation_time == None or (t - self.last_observation_time) > self.observation_interval):
-			return True
-		else:
-			return False
 
 	def recalculate_control(self):
 		TRh = self.TRh[-1][1]
@@ -55,13 +90,6 @@ class controlProtocol:
 		#if( TRh_max > 2.):
 		self.control = [[0.,0.]] * self.number_of_patches
 		self.control[max_transmition_patch] = [0.5,0.5]
-
-	def calculate_control(self,t):
-		if(t-self.last_control_time > self.control_interval):
-			self.recalculate_control()
-
-	def get_control(self,i):
-		return self.control[i]
 
 	def calculate_indices(self,t):
 		n=self.number_of_patches
@@ -101,16 +129,6 @@ class controlProtocol:
 		self.TRv.append((t, [sum(Rv[i,:]) for i in range(n)])) #vector transmission index (verificar)
 		return self.TRh[-1][1]
 
-	def set_observation_interval(self, dt):
-		self.observation_interval = dt
-		if(self.control_interval==None):
-			self.control_interval = dt
-
-	def set_control_interval(self, dt):
-		self.control_interval = dt
-		if(self.observation_interval == None):
-			self.observation_interval=dt
-
 	def plot_TRindex(self, i):
 		plt.figure()
 		plt.xlabel('Tiempo')
@@ -136,13 +154,12 @@ class noControl:
 		return self.default_control
 
 class randomControl(controlProtocol):
-
 	def recalculate_control(self):
 		random_patch = rnd.randint(0,self.number_of_patches-1)
 		self.control = [[0.,0.]] * self.number_of_patches
 		self.control[random_patch] = [0.5,0.5]
 
-class IndexBasedControl:
+class IndexBasedControl(Protocol):
 	def __init__(self,Model):
 		self.observation = None
 		self.last_observation_time = None
@@ -157,22 +174,7 @@ class IndexBasedControl:
 		self.last_observation_time=t
 		self.indices = self.get_indices(self.observation)
 
-	def observation_time(self,t):
-		if(self.last_observation_time == None or (t - self.last_observation_time) > self.observation_interval):
-			return True
-		else:
-			return False
-
 	def recalculate_control(self):
-		Index_of_max = max(self.indices)
-		patch_index = self.indices(Index_of_max)
+		patch_index = np.argmax(self.indices)
 		self.control = [[0.]] * self.number_of_patches
 		self.control[patch_index] = [1.]
-
-	def calculate_control(self,t):
-		if(t-self.last_control_time > self.control_interval):
-			self.recalculate_control()
-		return self.control
-
-	def get_control(self,i):
-		return self.control[i]

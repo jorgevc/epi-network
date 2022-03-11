@@ -211,6 +211,9 @@ class simulation:
 	def set_control_protocol(self,control_protocol):
 		self.control_protocol = copy.deepcopy(control_protocol)
 
+	def copy(self):
+		return copy.deepcopy(self)
+
 	def graficar(self,i):
 		plt.figure()
 		plt.xlabel('Tiempo')

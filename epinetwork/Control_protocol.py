@@ -21,42 +21,45 @@
 
 import numpy as np
 import random as rnd
-from .Models import Model
 
 class Protocol:
-	def __init__(self,update_time=1.):
+	def __init__(self,*,update_interval=1.,model=None):
 		self.observation = None
 		self.last_observation_time = None
-		self.observation_interval = update_time
+		self.observation_interval = update_interval
 		self.control = None
 		self.last_control_time = None
-		self.control_interval = update_time
+		self.control_interval = update_interval
+		self.model = model
 
-	def control(self,y,t):
+	def get_control(self,y,t):
 		if(self.observation_time(t)):
-			self.observations=y.copy()
-			self.last_observation_time=t
+			self.observation=y.copy()
+			self.last_observation_time = t
 		if(self.last_control_time is None):
 			self.calculate_control()
-		if(t-self.last_control_time > self.control_interval):
-			self.calculate_control()
+			self.last_control_time = t
+		elif( self.control_interval is not None):
+			if(t-self.last_control_time > self.control_interval):
+				self.calculate_control()
+				self.last_control_time = t
 		return self.control
 
 	def calculate_control():
 		pass
 
 	def observe(self,y,t):
-		self.observations=y.copy()
+		self.observation=y.copy()
 		self.last_observation_time=t
 
 	def observation_time(self,t):
-		if(self.last_observation_time == None or (t - self.last_observation_time) > self.observation_interval):
+		if (self.last_observation_time is None):
 			return True
+		elif ((self.observation_interval is not None)):
+			if ((t - self.last_observation_time) > self.observation_interval):
+				return True
 		else:
-			return False
-
-	def get_control(self,i):
-		return self.control[i]
+			return True
 
 	def set_observation_interval(self, dt):
 		self.observation_interval = dt
@@ -164,26 +167,15 @@ class noControl:
 	def get_control(self,i):
 		return self.default_control
 
-class randomControl(controlProtocol):
-	def recalculate_control(self):
-		random_patch = rnd.randint(0,self.number_of_patches-1)
-		self.control = [[0.,0.]] * self.number_of_patches
-		self.control[random_patch] = [0.5,0.5]
+class RandomControl(Protocol):
+	def calculate_control(self):
+		random_patch = rnd.randint(0,self.model.number_of_patches-1)
+		self.control = np.zeros((self.model.number_of_patches,1))
+		self.control[random_patch] = np.array([1.])
 
 class IndexBasedControl(Protocol):
-	def __init__(self,update_time=1.,model=Model()):
-		super().__init__(update_time)
-		self.indices = None
-		try:
-			self.get_indices = model.get_indices #get_indices should be implemented in model class it should receive the state y of the system
-		except:
-			self.get_indices = None
-
-	def configure(self,model):
-		self.get_indices = model.get_indices
-
 	def calculate_control(self):
-		self.indices = self.get_indices(self.observation)
+		self.indices = self.model.get_indices(self.observation)
 		patch_index = np.argmax(self.indices)
-		self.control = np.zeros((self.number_of_patches,1))
+		self.control = np.zeros((self.model.number_of_patches,1))
 		self.control[patch_index] = np.array([1.])

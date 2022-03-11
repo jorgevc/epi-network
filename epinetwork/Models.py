@@ -20,12 +20,11 @@
 #
 
 import numpy as np
-from .Control_protocol import noControl
 from .MobilityNetwork import noMobility
 from .Control_protocol import Protocol
 
 class Model:
-    def __init__(self,n=0, params = None , network=None, control = noControl()):
+    def __init__(self,n=0, params = None , network=None, control = Protocol()):
      #Number of patches, parameter of a patch, mobility network, conctrol class
         self.number_of_variables = 0
         self.number_of_patches = n
@@ -37,9 +36,12 @@ class Model:
             else:
                 self.p = network
                 self.number_of_patches = network.network.number_of_nodes()
-        self.control = control
+        if isinstance(control,Protocol):
+            self.control = control
+            self.control.configure(self)
+        else:
+            self.control = control(self)
         self.params = params
-
 
     def system(self,t,yv):
         pass
@@ -53,20 +55,8 @@ class Model:
 class VectorBorne(Model):
     def __init__(self,n=1,params = np.full((4),None) , network=None, control = noControl()):
          #Number of patches, parameter of a patch, mobility network, conctrol class
+        super().__init__(n,network,control)
         self.number_of_variables = 5
-        self.number_of_patches = n
-        if (network is None):
-            self.p = noMobility(n)
-        else:
-            if isinstance(network,type):
-                self.p = network(n)
-            else:
-                self.p = network
-                self.number_of_patches = network.network.number_of_nodes()
-        if isinstance(control,Protocol):
-            self.control = control
-        else:
-            self.control = control(self)
         self.final_size_presition = 0.1
         self.final_size_max_iterations = 100
         self.beta_h = np.full((self.number_of_patches),params[0])
@@ -90,7 +80,7 @@ class VectorBorne(Model):
         F_I = self.p.matrix.dot(W/P)
         F_V = I.dot(self.p.matrix)
 
-        u = self.control.get_control(y,t)
+        u = self.control.control(y,t)
 
         dS = - self.beta_h * S * F_I
         dI =  self.beta_h * S * F_I - self.gamma * I

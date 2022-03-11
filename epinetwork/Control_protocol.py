@@ -21,15 +21,29 @@
 
 import numpy as np
 import random as rnd
+from .Models import Model
 
 class Protocol:
-	def __init__(self,params,P_network):
-		self.observations = None
+	def __init__(self,update_time=1.):
+		self.observation = None
 		self.last_observation_time = None
-		self.observation_interval = 1.
+		self.observation_interval = update_time
 		self.control = None
-		self.last_control_time = 0.
-		self.control_interval = 1.
+		self.last_control_time = None
+		self.control_interval = update_time
+
+	def control(self,y,t):
+		if(self.observation_time(t)):
+			self.observations=y.copy()
+			self.last_observation_time=t
+		if(self.last_control_time is None):
+			self.calculate_control()
+		if(t-self.last_control_time > self.control_interval):
+			self.calculate_control()
+		return self.control
+
+	def calculate_control():
+		pass
 
 	def observe(self,y,t):
 		self.observations=y.copy()
@@ -40,14 +54,6 @@ class Protocol:
 			return True
 		else:
 			return False
-
-	def calculate_control(self,t):
-		if(t-self.last_control_time > self.control_interval):
-			self.recalculate_control()
-		return self.control
-
-	def recalculate_control(self):
-		pass
 
 	def get_control(self,i):
 		return self.control[i]
@@ -90,6 +96,11 @@ class controlProtocol(Protocol):
 		#if( TRh_max > 2.):
 		self.control = [[0.,0.]] * self.number_of_patches
 		self.control[max_transmition_patch] = [0.5,0.5]
+
+	def calculate_control(self,t):
+		if(t-self.last_control_time > self.control_interval):
+			self.recalculate_control()
+		return self.control
 
 	def calculate_indices(self,t):
 		n=self.number_of_patches
@@ -160,21 +171,19 @@ class randomControl(controlProtocol):
 		self.control[random_patch] = [0.5,0.5]
 
 class IndexBasedControl(Protocol):
-	def __init__(self,Model):
-		self.observation = None
-		self.last_observation_time = None
-		self.observation_interval = 1.
+	def __init__(self,update_time=1.,model=Model()):
+		super().__init__(update_time)
 		self.indices = None
-		self.get_indices = Model.get_indices #get_indices should be implemented in model class it should receive the state y of the system
-		self.control = None
-		self.number_of_patches = Model.number_of_patches
+		try:
+			self.get_indices = model.get_indices #get_indices should be implemented in model class it should receive the state y of the system
+		except:
+			self.get_indices = None
 
-	def observe(self,y,t):
-		self.observation=y.copy()
-		self.last_observation_time=t
+	def configure(self,model):
+		self.get_indices = model.get_indices
+
+	def calculate_control(self):
 		self.indices = self.get_indices(self.observation)
-
-	def recalculate_control(self):
 		patch_index = np.argmax(self.indices)
-		self.control = [[0.]] * self.number_of_patches
-		self.control[patch_index] = [1.]
+		self.control = np.zeros((self.number_of_patches,1))
+		self.control[patch_index] = np.array([1.])

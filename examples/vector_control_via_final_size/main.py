@@ -51,9 +51,9 @@ def main():
 
     P = MobilityNetwork()
     P.binomial(n,b,min_residential)
-
-    vectorModel = VectorBorne(params=param, network=P, control=IndexBasedControl)
-
+    control = IndexBasedControl(update_time=5)
+    vectorModel = VectorBorne(params=param, network=P, control=control)
+    
     sim = simulation(vectorModel)
     sim.set_initial_conditions_all_patches(y)
     y[1]=y[1]+1. # Se agrega 1 infectado a las condiciones iniciales

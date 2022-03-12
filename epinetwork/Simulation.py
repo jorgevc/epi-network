@@ -71,7 +71,7 @@ class simulation:
 	__slots__=('No_patches','parameters','patch_dimention','node','time','model','P','evolution',\
 	'control_protocol','simulation_time','total_infected','total_susceptible',\
 	'total_recovered','runned_times','infected_variable',\
-	'recovered_variable')
+	'recovered_variable','evolution_totals')
 	def __init__(self, model=Model()):
 		#parameteres
 		self.No_patches = model.number_of_patches #numero de parches
@@ -90,6 +90,7 @@ class simulation:
 		self.runned_times = 0
 		self.infected_variable = 1
 		self.recovered_variable = 2
+		self.evolution_totals = None
 
 	def reset(self):
 		self.__init__()
@@ -202,9 +203,6 @@ class simulation:
 		solution = np.array(solve_ivp(system, [min(self.time), max(self.time)], initial, t_eval=self.time).y)
 		self.evolution = solution.reshape(n,dim,-1)
 
-		self.calculate_total_infected()
-		self.calculate_total_susceptible()
-		self.calculate_total_recovered()
 		self.runned_times += 1
 		return self
 
@@ -229,20 +227,24 @@ class simulation:
 			plt.plot(self.time,self.evolution[i,self.infected_variable,:])
 		plt.show()
 
+	def get_evolution_totals(self):
+		self.evolution_totals = np.sum(self.evolution, axis=0)
+		return self.evolution_totals
+
 	def calculate_total_infected(self):
 		infected = self.infected_variable
-		self.total_infected = self.evolution[0,infected,:]  #asumed 2nd equation is infected
+		self.total_infected = self.evolution[0,infected,:].copy()  #asumed 2nd equation is infected
 		for i in range(1,self.No_patches):
 			self.total_infected += self.evolution[i,infected,:]
 
 	def calculate_total_susceptible(self):
-		self.total_susceptible = self.evolution[0,0,:]  #asumed 1st equation is susceptible
+		self.total_susceptible = self.evolution[0,0,:].copy()  #asumed 1st equation is susceptible
 		for i in range(1,self.No_patches):
 			self.total_susceptible += self.evolution[i,0,:]
 
 	def calculate_total_recovered(self):
 		recovered = self.recovered_variable
-		self.total_recovered = self.evolution[0,recovered,:]  #asumed 3er ecuation is recovered
+		self.total_recovered = self.evolution[0,recovered,:].copy()  #asumed 3er ecuation is recovered
 		for i in range(1,self.No_patches):
 			self.total_recovered += self.evolution[i,recovered,:]
 

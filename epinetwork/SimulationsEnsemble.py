@@ -3,11 +3,12 @@ import copy
 from .MobilityNetwork import MobilityNetwork
 import matplotlib.pyplot as plt
 import matplotlib.lines as ml
+import numpy as np
 
 
 class simulationsEnsemble:
 	__slots__=('simulations','susceptible_average','infected_average',\
-	'recovered_average','number_of_simulations','max_infected')
+	'recovered_average','number_of_simulations','max_infected','evolution_average')
 
 	def __init__(self):
 		self.simulations = []
@@ -16,6 +17,7 @@ class simulationsEnsemble:
 		self.recovered_average = None
 		self.number_of_simulations = 0
 		self.max_infected = None
+		self.evolution_average = None
 
 	def add_simulation(self, simulation):
 		self.simulations.append(copy.deepcopy(simulation))
@@ -29,6 +31,11 @@ class simulationsEnsemble:
 			self.run_simulation(i)
 		self.average_infected()
 		self.average_recovered()
+
+	def get_evolution_average(self):
+		evols = np.array([x.get_evolution_totals() for x in self.simulations])
+		self.evolution_average = np.sum(evols,axis=0)
+		return self.evolution_average, self.simulations[0].time
 
 	def average_infected(self):
 		n=self.number_of_simulations

@@ -75,7 +75,7 @@ def main():
 
 def comparison():
     #parameteres
-    number_of_simulations = 50
+    number_of_simulations = 100
     n = 6 #numero de parches
     b = 0.5 # parametro de la red binomial
     min_residential = 0.8 # diagonal de la matriz de mobilidad mayor a este numero
@@ -110,19 +110,33 @@ def comparison():
 
     for i in range(number_of_simulations):
         #Both ensembles have the same Mobility Network P
-        P.binomial(n,b,min_residential)
+        P.barabsi_albert(n,m=b,min_residential=min_residential)
+        #otros tipos de redes:
+        #P.binomial(n,b,min_residential)
+        #P.newman_watts_strogatz(n,k,p,min_residential)
         sim.model.set_protocol(index_control)
         IndexControledEnsemble.add_simulation(sim) #when a simulation is addet to an ensemble it makes a copy, thus we car resuse the object simulation
         sim.model.set_protocol(rand_control)
         RandControledEnsemble.add_simulation(sim)
 
-    IndexControledEnsemble.run_all_simulations()
-    RandControledEnsemble.run_all_simulations()
+    IndexControledEnsemble.multiprocessing_run_all(No_of_process=8)
+    RandControledEnsemble.multiprocessing_run_all(No_of_process=8)
 
-    infected_plot = IndexControledEnsemble.plot_infected_average()
-    RandControledEnsemble.plot_infected_average(infected_plot)
-    recov_plot = IndexControledEnsemble.plot_recovered_average()
-    RandControledEnsemble.plot_recovered_average(recov_plot)
+    y_index_controlled, t = IndexControledEnsemble.get_evolution_average()
+    y_rnd_controlled, t = RandControledEnsemble.get_evolution_average()
+
+    fig, ax1 = plt.subplots()
+    ax1.plot(t,y_index_controlled[1],label="Index controlled")
+    ax1.plot(t,y_rnd_controlled[1],label="Random controlled")
+    ax1.set_ylabel('Infected population')
+    ax1.legend()
+
+    fig2, ax2 = plt.subplots()
+    ax2.plot(t,y_index_controlled[4],label="Index controlled")
+    ax2.plot(t,y_rnd_controlled[4],label="Random controlled")
+    ax2.set_ylabel('Invected vector population')
+    ax2.legend()
+
     plt.show()
 
 if (True):

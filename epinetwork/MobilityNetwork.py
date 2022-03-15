@@ -42,27 +42,14 @@ class MobilityNetwork:
 		"""
 		Net = self.adjacency_network
 		n=nx.number_of_nodes(Net)
-		for i in Net.nodes():
-			Net.add_edge(i,i)
 
-		for u,v,d in Net.edges(data=True):
-			if u == v:
-				d['weight']=rand.uniform(min_residential,1)
-			else:
-				d['weight']=rand.uniform(0,min_residential)
-
-		B=nx.to_numpy_matrix(Net,weight='weight')
-
-		for i in range (0,n):
-			suma=0
-			for j in range (0,n):
-				suma=suma+B[i,j]
-			B[i,:]=B[i,:]/suma
-
-		NewNet=nx.from_numpy_matrix(B)
-
-		self.matrix = np.squeeze(np.asarray(B))
-		self.network = NewNet
+		diag = np.random.uniform(low=min_residential,high=1.0,size=n)
+		B=nx.to_numpy_matrix(Net)
+		sums = np.sum(B, axis=1) - B.diagonal()
+		A = ((B.T/sums)*(1.-diag)).T
+		np.fill_diagonal(A,diag)
+		self.matrix = np.squeeze(A)
+		self.network = nx.from_numpy_matrix(A)
 
 		return B
 

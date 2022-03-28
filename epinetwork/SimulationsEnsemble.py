@@ -23,12 +23,9 @@ class simulationsEnsemble:
 		self.simulations.append(copy.deepcopy(simulation))
 		self.number_of_simulations += 1
 
-	def run_simulation(self,i):
-		self.simulations[i].run()
-
 	def run_all_simulations(self):
 		for i in range(self.number_of_simulations):
-			self.run_simulation(i)
+			self.simulations[i].run()
 		self.average_infected()
 		self.average_recovered()
 
@@ -40,16 +37,17 @@ class simulationsEnsemble:
 	def average_infected(self):
 		n=self.number_of_simulations
 		if (n>0 and self.simulations[0].runned_times == 0):
-			self.run_simulation(0)
+			self.simulations[0].run()
 		elif (n==0):
 			print("You have to add some simulations...")
 			exit()
-		infected_average = self.simulations[0].total_infected.copy()
+		infected_var = self.simulations[0].infected_variable
+		infected_average = self.simulations[0].evolution_totals[infected_var,:].copy()
 		for i in range(1,n):
 			if (self.simulations[i].runned_times == 0):
 				print("Warning: Running in non multiprocessing ")
-				self.run_simulation(i)
-			infected_average += self.simulations[i].total_infected
+				self.simulations[i].run()
+			infected_average += self.simulations[i].evolution_totals[infected_var,:]
 		self.infected_average = infected_average/(n)
 		return infected_average.copy()
 
@@ -60,11 +58,12 @@ class simulationsEnsemble:
 		elif (n==0):
 			print("You have to add some simulations...")
 			exit()
-		susceptible_average = self.simulations[0].total_susceptible.copy()
+		susceptible = self.simulations[0].susceptible_variable
+		susceptible_average = self.simulations[0].evolution_totals[susceptible,:].copy()
 		for i in range(1,n):
 			if (self.simulations[i].runned_times == 0):
 				self.run_simulation(i)
-			susceptible_average += self.simulations[i].total_susceptible
+			susceptible_average += self.simulations[i].evolution_totals[susceptible,:]
 		self.susceptible_average = susceptible_average/(n)
 		return susceptible_average.copy()
 
@@ -75,11 +74,12 @@ class simulationsEnsemble:
 		elif (n==0):
 			print("You have to add some simulations...")
 			exit()
-		recovered_average = self.simulations[0].total_recovered.copy()
+		recovered=self.simulations[0].recovered_variable
+		recovered_average = self.simulations[0].evolution_totals[recovered,:].copy()
 		for i in range(1,n):
 			if (self.simulations[i].runned_times == 0):
 				self.run_simulation(i)
-			recovered_average += self.simulations[i].total_recovered
+			recovered_average += self.simulations[i].evolution_totals[recovered,:]
 		self.recovered_average = recovered_average/(n)
 		return recovered_average.copy()
 
@@ -107,7 +107,7 @@ class simulationsEnsemble:
 
 		for i in range(number_process_simulations[rank]):
 			n=process_offset[rank] + i
-			self.run_simulation(n)
+			self.simulations[n].run()
 			process_simulations.append(self.simulations[n])
 
 		comm.barrier()

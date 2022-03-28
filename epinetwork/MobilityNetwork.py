@@ -42,14 +42,18 @@ class MobilityNetwork:
 		"""
 		Net = self.adjacency_network
 		n=nx.number_of_nodes(Net)
-
+		# give random values to the diagonal i.e. own patch residential time
 		diag = np.random.uniform(low=min_residential,high=1.0,size=n)
-		B=nx.to_numpy_matrix(Net)
-		sums = np.sum(B, axis=1) - B.diagonal()
-		A = ((B.T/sums)*(1.-diag)).T
-		np.fill_diagonal(A,diag)
-		self.matrix = np.squeeze(A)
-		self.network = nx.from_numpy_matrix(A)
+		B=nx.to_numpy_array(Net)
+		#Give random values to the edges
+		B = np.random.uniform(low=0.1,size=B.shape)*B
+		sums = np.sum(B, axis=1).T - B.diagonal() #Sum of rows without diagonal
+		#we found the normalization to the offdiagonal elements:
+		normalization = np.divide(1.-diag,sums, out=1.-diag, where=sums!=0)
+		A = ((B.T)*normalization).T #Multiply by the nomralization of offdiagonal elements
+		np.fill_diagonal(A,diag) #We add the diagonal elements.
+		self.matrix = A
+		self.network = nx.from_numpy_array(A)
 
 		return B
 

@@ -151,21 +151,13 @@ class controlProtocol(Protocol):
 		plt.show()
 
 
-class noControl:
-	def __init__(self,default = 0):
-		self.default_control= [default,default]
+class noControl(Protocol):
+	def __init__(self,model=None):
+		super().__init__(update_interval=None,model=model)
 
-	def observe(self,y,t):
-		pass
+	def calculate_control(self):
+		self.control = np.zeros((self.model.number_of_patches,1))
 
-	def observation_time(self,t):
-		return False
-
-	def calculate_control(self,t):
-		pass
-
-	def get_control(self,i):
-		return self.default_control
 
 class RandomControl(Protocol):
 	def calculate_control(self):

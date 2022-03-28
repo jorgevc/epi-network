@@ -44,7 +44,7 @@ class Model:
 
     def set_network(self, network):
         if isinstance(network,type):
-            self.p = network(n)
+            self.p = network(self.number_of_patches)
         else:
             self.p = network
             if ( network.network.number_of_nodes() > self.number_of_patches ):
@@ -55,8 +55,8 @@ class VectorBorne(Model):
          #Number of patches, parameter of a patch, mobility network, conctrol class
         super().__init__(n=n,network=network,control=control)
         self.number_of_variables = 5
-        self.final_size_presition = 0.1
-        self.final_size_max_iterations = 100
+        self.final_size_presition = 1.
+        self.final_size_max_iterations = 200
         self.beta_h = np.full((self.number_of_patches),params[0])
         self.gamma = np.full((self.number_of_patches),params[1])
         self.beta_v = np.full((self.number_of_patches),params[2])

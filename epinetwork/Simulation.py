@@ -70,7 +70,7 @@ class simulation:
 
 	__slots__=('No_patches','parameters','patch_dimention','node','time','model','P','evolution',\
 	'control_protocol','simulation_time','total_infected','total_susceptible',\
-	'total_recovered','runned_times','infected_variable',\
+	'total_recovered','runned_times','susceptible_variable','infected_variable',\
 	'recovered_variable','evolution_totals')
 	def __init__(self, model=Model()):
 		#parameteres
@@ -82,12 +82,13 @@ class simulation:
 		self.model = model
 		self.P = None
 		self.evolution = None
-		self.control_protocol = noControl()
+		self.control_protocol = noControl(model)
 		self.simulation_time = 100
 		self.total_infected = None
 		self.total_susceptible = None
 		self.total_recovered = None
 		self.runned_times = 0
+		self.susceptible_variable = 0
 		self.infected_variable = 1
 		self.recovered_variable = 2
 		self.evolution_totals = None
@@ -202,7 +203,7 @@ class simulation:
 		#self.evolution = [[solution[:,node*dim+column] for column in range(dim)] for node in range(n)]
 		solution = np.array(solve_ivp(system, [min(self.time), max(self.time)], initial, t_eval=self.time).y)
 		self.evolution = solution.reshape(n,dim,-1)
-
+		self.get_evolution_totals()
 		self.runned_times += 1
 		return self
 
@@ -233,7 +234,7 @@ class simulation:
 
 	def calculate_total_infected(self):
 		infected = self.infected_variable
-		self.total_infected = self.evolution[0,infected,:].copy()  #asumed 2nd equation is infected
+		self.total_infected = self.evolution[0,infected,:].copy()
 		for i in range(1,self.No_patches):
 			self.total_infected += self.evolution[i,infected,:]
 

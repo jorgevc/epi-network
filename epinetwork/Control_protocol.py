@@ -45,7 +45,7 @@ class Protocol:
 				self.last_control_time = t
 		return self.control
 
-	def calculate_control():
+	def calculate_control(self):
 		pass
 
 	def observe(self,y,t):

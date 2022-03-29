@@ -105,6 +105,58 @@ def detailed():
 
     plt.show()
 
+def index():
+    n = 6 #numero de parches
+    b = 0.5 # parametro de la red binomial
+    min_residential = 0.9 # diagonal de la matriz de mobilidad mayor a este numero
+    #vector de parametros para una zona
+    param = np.zeros(5)
+    param[0] = beta_h = 0.67
+    param[1] = gamma = 1./7.
+    param[2] = beta_v = 0.67  #5
+    param[3] = mu_v = 1./8.
+    #initial conditions para una zona
+    y = np.zeros(5)
+    S = y[0] = 1500.
+    I = y[1] = 0.0
+    R = y[2] = 0.0
+    V = y[3] = 200.
+    W = y[4] = 0.#
+
+    P = MobilityNetwork()
+    #P.barabsi_albert(n,m=2,min_residential=min_residential)
+    P.binomial(n,b,min_residential=min_residential)
+    vectorModel = VectorBorne(n,params=param, network=P)
+
+    sim = simulation(vectorModel)
+    sim.set_initial_conditions_all_patches(y)
+    N = sim.node[:,0]
+    Nv = sim.node[:,3]
+    y[1]=y[1]+1. # Se agrega 1 infectado a las condiciones iniciales
+    sim.set_initial_conditions_patch(1,y) #Se establece esta condicion inicial en la zona 1
+    sim.set_simulation_time(1000) #How many "days" to simulate
+
+    R_index_list = []
+    R_sim_list = []
+    beta_range = np.arange(0.1,2.,0.01)
+    for betav in beta_range :
+        param[0]=betav
+        vectorModel.set_patches_params(param)
+        R_index_list.append(vectorModel.local_final_size(N,N,Nv).copy())
+        sim.run()
+        R_sim_list.append(sim.evolution[:,2,-1].copy())
+
+    R_index = np.array(R_index_list)
+    R_sim = np.array(R_sim_list)
+    for patch in range(vectorModel.number_of_patches):
+         fig, ax1 = plt.subplots()
+         ax1.plot(beta_range,R_index[:,patch],label="R_index")
+         ax1.plot(beta_range,R_sim[:,patch], label="R_sim")
+         ax1.legend()
+         ax1.set_title("patch " + str(patch))
+
+    plt.show()
+
 
 def main():
     #parameteres
@@ -227,4 +279,5 @@ def comparison():
 if (True):
     #main()
     #comparison()
-    detailed()
+    #detailed()
+    index()

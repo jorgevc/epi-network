@@ -21,10 +21,10 @@
 
 import numpy as np
 from .MobilityNetwork import MobilityNetwork
-from .Control_protocol import Protocol
+from .Control_protocol import noControl, Protocol
 
 class Model:
-    def __init__(self,n=0, *, params = None , network=MobilityNetwork(), control = Protocol()):
+    def __init__(self,n=0, *, params = None , network=MobilityNetwork(), control = noControl()):
      #Number of patches, parameter of a patch, mobility network, conctrol class
         self.number_of_variables = 0
         self.number_of_patches = n
@@ -51,7 +51,7 @@ class Model:
                 self.number_of_patches = network.network.number_of_nodes()
 
 class VectorBorne(Model):
-    def __init__(self,n=1,*,params = np.full((4),None) , network=None, control = Protocol()):
+    def __init__(self,n=1,*,params = np.full((4),None) , network=None, control = noControl()):
          #Number of patches, parameter of a patch, mobility network, conctrol class
         super().__init__(n=n,network=network,control=control)
         self.number_of_variables = 5

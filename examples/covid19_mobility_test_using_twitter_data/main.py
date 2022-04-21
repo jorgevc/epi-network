@@ -16,10 +16,6 @@ import copy
 import random
 
 def f(x,n_links):
-    """
-    Comenzamos con los parametros de la epidemia, tomando en cuenta datos sustraidos de Twitter, para un
-    análisis de su comportamiento antes del covid.
-    """
     y=1./(1.+x)**1.24
     A=sum(y)
     z=np.rint(((n_links)/A)*y)
@@ -27,9 +23,6 @@ def f(x,n_links):
     #return 40/(1+x)**1.0326  precovid
 
 def g(x,n_links):
-    """
-    Análisis correspondiente al comporamineto durante la pandemia.
-    """
     y=1./(1.+x)**0.8952
     A=sum(y)
     z=np.rint(((n_links)/A)*y)
@@ -38,9 +31,6 @@ def g(x,n_links):
 
 
 def distance_matrix(n,d_max):
-    """ 
-    Se crean más parámetros de la matriz dependiendo los valores arrojados en las primeras funciones.
-    """
     # Vectores de los ejes 'x' y 'y'
     X = np.random.randint(d_max, size = n)
     Y = np.random.randint(d_max, size = n)
@@ -52,10 +42,6 @@ def distance_matrix(n,d_max):
 
     #Distancias entre todos los puntos
     for i in range(n):
-        """
-        Creamos un condicional con matrices, esto es, para arrojar matrices dependiendo de los parámetros
-        arrojados.
-        """
         for j in range(n):
             s = (X[i] - X[j], Y[i] - Y[j])
             d_ij = np.linalg.norm(s)
@@ -67,10 +53,6 @@ def distance_matrix(n,d_max):
     return Z,position
 
 def adjacency_matrixt(n,matrix,d_distribution):
-    """ 
-    De manera similar que arriba, formaremos matrrices adyacentes, con una distribución y separacion
-    definidas.
-    """
     # Lista de Matrices adyacentes
     adj = np.zeros((n,n))
     bins = d_distribution[0]
@@ -95,9 +77,6 @@ def adjacency_matrixt(n,matrix,d_distribution):
     return adj
 
 def from_geometric_network(nodes,d_distribution):
-    """
-    Consta de una matriz geométrica donde sus dimensiones estarán dadas por nodos.
-    """
     d_max=d_distribution[0][-1]
     dist_m,position = distance_matrix(nodes,d_max)
     adj_mt = adjacency_matrixt(nodes, dist_m, d_distribution)
@@ -106,15 +85,12 @@ def from_geometric_network(nodes,d_distribution):
 
 #if __name__ == '__main__':
 if (True):
-    """
-    Establecemos los primeros parámetros de la simulación.
-    """
     # Vectores de los ejes x y y
     import time
-    n = 30 #patches #Número de islas
+    n = 30 #patches
     d_max = 15
     #n_links = np.array([int(0.5*n),int(n),int(1.5*n),int(2*n),int(2.5*n),int(3*n)])
-    n_links = [int(1.2*n)] # Número total de nodos
+    n_links = [int(1.2*n)]
     #Rel=0.8 reduction in links 1st attempt
     Ren=0.71 #reduction in visited sites
     #Rel=2.1 #1.9 #reduction or increment in visited sites douring covid
@@ -126,9 +102,6 @@ if (True):
     number_of_simulations = 250
 
     #vector de parametros para una zona
-    """
-    En este caso exclusivo, se divide entre dos para poder sacar un promedio de la literatura.
-    """
     Ro=(2. + 4.5)/2.
 
     param = [0]*5
@@ -153,9 +126,6 @@ if (True):
     #n_links = np.arange(30,401,10)
     point4=0.
     for l in n_links:
-        """
-        Elaboramos la simulación, donde 'y' serán los objetos especiales.  
-        """
         y[1] = 0.0
         y[2] = 0.0
         y[3] = 0.0
@@ -175,9 +145,6 @@ if (True):
         d_dist_Covid=g(bins,l*Rel)
 
         for i in range(number_of_simulations) :
-            """
-            Generaremos mobilidad entre nodos, para generar mejor movilidad durante cada simulación.
-            """
             adj_matrix,position=from_geometric_network(n,d_dist_preCovid)
             P = MobilityNetwork()
             P.from_adjacency_matrix(adj_matrix, 0.8) #para cada simulacion se genera nueva mobilidad
@@ -189,10 +156,6 @@ if (True):
                 G_deg_sum = [a * b for a, b in zip(G_deg, range(0, len(G_deg)))]
                 print('average degree: {}'.format(sum(G_deg_sum) / P.network.number_of_nodes()))
 
-            """
-            En este punto, vamos a ensablar las simulaciones matriciales con sim. y ensamble.
-            De igual manera, agregamos una matriz de ceros para poner mayor mobilidad . 
-            """
             sim.set_conectivity_network(P)
             del(P)
             ensemble.add_simulation(sim)
@@ -219,10 +182,6 @@ if (True):
             ensemble_Covid19.add_simulation(sim)
             exit()
 
-        """
-        Tomamos todos los procesos hechos y sacamos un valor promedio, para después proceder a guardarlos
-        en una base de datos.
-        """
         ensemble.multiprocessing_run_all(8) #12 is the number of processes
         ensemble_Covid19.multiprocessing_run_all(8)
 

@@ -22,22 +22,6 @@ import numpy as np
 
 def PLOSModel(yv,t,param,p,n,control):
 # regresa la derivada del sistema de ecuaciones diferenciales
-   """
-   Se crean vectores fila de ceros para hacer un modelo base
-   
-   Parameters
-		--------
-   yv : state
-      estado base
-   t : time
-      tiempo
-   param : array[]
-      arreglo determinado
-   p : matrix[Network]
-      matriz para operar
-   n : No_patches
-         sin parches
-   """
    y = yv.reshape(n,5)
 
    Sh = np.zeros(n)
@@ -59,10 +43,7 @@ def PLOSModel(yv,t,param,p,n,control):
    j=0
    z=0
 
-   """
-   Un bucle para que nuestras variales cuenten con valores para poder realizar la simulción
-   definiendo los vectores y los contagios.
-   """
+
    for i in range (0,n):
       Sh[i] = y[i][0]
       Ih[i] = y[i][1]
@@ -79,9 +60,6 @@ def PLOSModel(yv,t,param,p,n,control):
 
    control.calculate_control(t)
 
-   """
-   Se establecen algunos paramentros para poder manejar las graficas de manera más sencilla.
-   """
    for i in range (0,n):
       control_params = control.get_control(i)
       beta[i] = param[i][0]*(1. - control_params[0])
@@ -93,9 +71,6 @@ def PLOSModel(yv,t,param,p,n,control):
       W[i] = sum(Nh*p[:,i])
       F[i] = Iv[i] / W[i]
 
-   """
-   Se establecen diferenciales y arreglos como preámbulo para las simulaciones.
-   """
    for i in range (0,n):
 
       dS = -beta[i]*Sh[i]*sum(p[i,:]*F)
@@ -166,10 +141,6 @@ def SEAIR(yv,t,param,p,n,control):
     return np.array([dS, dE, dA, dI, dR]).T.flatten()
 
 def SEAIRD(yv,t,param,p,n,control):
-    """
-    En lo mismo que el primer caso, cambiando el tipo de numero que será registrado y las operaciones 
-    definidas para los mismos.
-    """
     y = yv.reshape(n,6)
 
     S = np.zeros(n)

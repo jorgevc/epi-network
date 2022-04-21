@@ -255,7 +255,7 @@ class simulation:
 		return line
 
 if __name__ == '__main__':
-	from .modelos import PLOSModel
+	from modelos import PLOSModel
 	#parameteres
 
 	n = 6 #numero de parches

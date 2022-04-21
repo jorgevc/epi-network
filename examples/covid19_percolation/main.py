@@ -14,6 +14,9 @@ import random
 import time
 
 def Initial_infected_patch(N):
+    """
+    Condiciones iniciales del infectado inicial.
+    """
     N_total=sum(N)
     rand=random.uniform(0.,N_total)
     S=0.0
@@ -39,6 +42,10 @@ def delete_random_edges(graph,k=1):
     return graph
 
 def remove_random_nodes(G,k=1):
+    """
+    Eliminamos nodos de manera aleatoria para poder ver el comportamiento de la pandemia dependiedo 
+    de sus conexiones.
+    """
     nodes = list(G.nodes())
     chosen_nodes = random.sample(nodes,k)
     for chosen_node in chosen_nodes:
@@ -48,6 +55,10 @@ def remove_random_nodes(G,k=1):
 
 
 if __name__ == '__main__':
+    """
+    Elaboramos la matriz de correlación, porcedemos a crear "ciudades", las conectamos con nodos y vemos 
+    como reaccionan.
+    """
     P = MobilityNetwork()
     B = P.from_adjacency_matrix("Datos/ma2.dat",0.8)
     n = B.shape[0] #number of patches
@@ -62,7 +73,10 @@ if __name__ == '__main__':
     units=50. # las delta de paso son realmente son 1/20
     p_nodes_max = int(0.6*units)
     p_edges_max = int(0.8*units)
-
+    
+    """
+    Otorgamos un par de parametros más específicos para esta prueba.
+    """
     max_infected = np.zeros((p_nodes_max+1,p_edges_max+1))
     total_infected = np.zeros((p_nodes_max+1,p_edges_max+1))
     np.save('p_nodes.npy',np.arange(p_nodes_max)/units)
@@ -104,7 +118,11 @@ if __name__ == '__main__':
                 Network=MobilityNetwork()
                 Network.from_netowrkx(G)
                 no_patches=Network.matrix.shape[0]
-
+                
+                
+                """
+                La simulación es creada con todos los parámetros anteriores.
+                """
                 sim = simulation() #se crea objeto simulacion
                 sim.add_many_patches_parameters(no_patches,param)  # se agregan n zonas con parametros dados en param
                 sim.set_model(SEAIRD) #Se establece el modelo para hacer la simulacion

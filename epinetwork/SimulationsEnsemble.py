@@ -6,9 +6,17 @@ import matplotlib.lines as ml
 
 
 class simulationsEnsemble:
+	"""
+    En esta clase, se hará un llamado a lo expuesto de los demás archivos para otorgar una mejor visión.
+    """
 	__slots__=('simulations','susceptible_average','infected_average',\
 	'recovered_average','number_of_simulations','max_infected')
 
+	"""
+ 	Para poder conseguir un promedio de infectados y de posibles casos, hay que correr un número n de 
+	simulaciones, esta parte del código se encargará de hacer la simulaciones necesarias y, tomar un
+ 	máximo de los posibles infctados. 
+  	"""
 	def __init__(self):
 		self.simulations = []
 		self.susceptible_average = None
@@ -82,6 +90,11 @@ class simulationsEnsemble:
 		self.max_infected=max(self.infected_average)
 		return self.max_infected.copy()
 
+
+	"""
+ 	Ya que todos estos procesos generarán una gran cantidad de datos, ésta función nos ayudará a 
+	manejarlos y ver si vamos por buen camino.
+  	"""
 	def MPI_run_all(self):
 		import  mpi4py
 		from mpi4py import MPI
@@ -114,6 +127,12 @@ class simulationsEnsemble:
 			MPI.Finalize()
 			exit()
 
+
+	"""
+ 	Antes se había mencionado que el cógigo haría las simulaciones necesarias para sacar un promedio,
+	con la siguiente función podremos ocupar nuestros procesadores disponiobles para hacer dichas
+	simulaciones.
+  	"""
 	def multiprocessing_run_all(self, No_of_process=8):
 		from multiprocessing import Pool
 		s=self.number_of_simulations
@@ -122,6 +141,10 @@ class simulationsEnsemble:
 			simulations = [res.get() for res in doing]
 		self.simulations = simulations
 
+	"""
+ 	Solo resta recolectar los datos arrojados por el simulador y graficar la población infectada contra el
+  	tiempo.
+  	"""
 	def save_average(self,file_name):
 		try:
 			import cPickle as pickle
@@ -192,7 +215,9 @@ class simulationsEnsemble:
 			ax.plot(time,R_average)
 		#plt.show()
 		return ax
-
+"""
+Definimos otra entidad con parametros fijos para poder correr la simulación.
+"""
 if __name__ == '__main__':
 	from .modelos import PLOSModel
 	#numero de simulaciones en el ensemble

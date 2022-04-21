@@ -21,16 +21,9 @@
 
 import numpy as np
 import random as rnd
-import matplotlib.pyplot as plt
 
 class controlProtocol:
-    
 	def __init__(self,params,P_network):
-		"""
-    	 La clase controlProtocol va a tener atributos
-    	 y le asignamos valores a esos atributos, a su vez, esta clase se basa en crear datos, parametros y 
-		 matrices para simular una pandemia en Simulation.py.
-     	"""
 		self.number_of_patches = len(params)
 		self.observations = [[0]*5]*self.number_of_patches
 		self.params = params
@@ -45,29 +38,17 @@ class controlProtocol:
 		self.control_interval = 1.
 
 	def observe(self,y,t):
-		"""
-		Tomamos las observaciones y producimos indices con respecto al tiempo.
-		"""
 		self.observations=y
 		self.last_observation_time=t
 		self.calculate_indices(t)
 
 	def observation_time(self,t):
-		"""
-		Colocamos un condicional donde, si en último valor del tiempo es exactamente "None" o,
-		si el tiempo menos el tiempo final registrado el mayor al intervalo de observación, arrojara "True", 
-		en caso de no cumplir esas condiciones, colocará "False"
-		"""
 		if(self.last_observation_time == None or (t - self.last_observation_time) > self.observation_interval):
 			return True
 		else:
 			return False
 
 	def recalculate_control(self):
-		"""
-		Veremos el indice de trasmición en un rango de -1,1; resultando en el máximo número de contagios,
-		además de proveer una alternativa si TRh_max > 2.
-		"""
 		TRh = self.TRh[-1][1]
 		TRh_max = max(TRh)
 		max_transmition_patch = TRh.index(TRh_max)
@@ -76,23 +57,13 @@ class controlProtocol:
 		self.control[max_transmition_patch] = [0.5,0.5]
 
 	def calculate_control(self,t):
-		"""
-		En caso de la diferencia de tiempos sea mayor a 1, se le otorgará el valor
-		de la función recalculate_control
-		"""
-		if(t - self.last_control_time > self.control_interval):
+		if(t-self.last_control_time > self.control_interval):
 			self.recalculate_control()
 
 	def get_control(self,i):
-		"""
-		Entrega el valor self.control
-		"""
 		return self.control[i]
 
 	def calculate_indices(self,t):
-		"""
-		Definimos variables y creamos elementos que se agragaran a una lista
-  		"""
 		n=self.number_of_patches
 		Sh=[]
 		Ih=[]
@@ -114,14 +85,7 @@ class controlProtocol:
 			gamma.append(self.params[i][1])
 			mu.append(self.params[i][4])
 			Nh.append(Sh[i] + Ih[i] + Rh[i])
-   
-		"""
-		Creamos matrices ceros de nxn y para k en n, haremos un producto de matrices y para j en n veremos 
-		un indice de infecciones secundarias producida por vectores infecciosos, a su vez, infecciones 
-  		secundarias generadas por un individuo o por vectores, la vulnerabiñidad del parche j 
-		y la tasa de transmisión.
 
-  		"""
 		Rv=np.zeros((n,n))
 		Rh=np.zeros((n,n))
 		p=self.P_network.matrix
@@ -137,27 +101,16 @@ class controlProtocol:
 		return self.TRh[-1][1]
 
 	def set_observation_interval(self, dt):
-		"""
-  		Si control_interval es exactamente "None", entonces control_interval es igual a dt.
-    	"""
 		self.observation_interval = dt
 		if(self.control_interval==None):
 			self.control_interval = dt
 
 	def set_control_interval(self, dt):
-		"""
-  		De manera similar si observation_interval es exactamente "None",
-    	entonces observation_interval es igual a dt.
-    	"""
 		self.control_interval = dt
 		if(self.observation_interval == None):
 			self.observation_interval=dt
 
 	def plot_TRindex(self, i):
-		"""
-  		Luego de tantos calculos, toca graficar, aqui los ejes serán el tiempo y tasa de transmisión 
-		y ver como los contagios evolucionan con el tiempo.
-    	"""
 		plt.figure()
 		plt.xlabel('Tiempo')
 		plt.ylabel('TR_i')
@@ -166,10 +119,6 @@ class controlProtocol:
 
 
 class noControl:
-	"""
- 	A grandes rasgos, creamos una "ruta de escape" en caso de que los parametros calculados
-	no hayan sido tomados en cuenta.
-  	"""
 	def __init__(self,default = 0):
 		self.default_control= [default,default]
 
@@ -188,10 +137,6 @@ class noControl:
 class randomControl(controlProtocol):
 
 	def recalculate_control(self):
-		"""
-  		Creamos unos un número random de parches para darle más versatilidad y fiabilidad a los calculos
-		posteriores.
-    	"""
 		random_patch = rnd.randint(0,self.number_of_patches-1)
 		self.control = [[0.,0.]] * self.number_of_patches
 		self.control[random_patch] = [0.5,0.5]

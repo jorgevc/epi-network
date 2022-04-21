@@ -25,11 +25,7 @@ import random as rand
 
 
 class MobilityNetwork:
-	"""
-    La clase MobilityNetwork se encargará de ver las interacciones entre los parches y arreglos, dando asi
-    una mejor predicción sobre la
-    pandemia. 
-	"""
+
 	def __init__(self):
 		self.matrix = None
 		self.network = None

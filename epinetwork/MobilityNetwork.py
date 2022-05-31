@@ -30,7 +30,7 @@ class MobilityNetwork:
 		self.adjacency_network = nx.empty_graph(n, create_using=nx.DiGraph)
 		for i in self.adjacency_network.nodes():
 			self.adjacency_network.add_edge(i,i)
-		self.matrix = nx.to_numpy_matrix(self.adjacency_network)
+		self.matrix = nx.to_numpy_array(self.adjacency_network)
 		self.network = self.adjacency_network.copy()
 
 

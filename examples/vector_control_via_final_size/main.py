@@ -106,31 +106,31 @@ def detailed():
     plt.show()
 
 def index():
-    n = 2 #numero de parches
+    n = 1 #numero de parches
     b = 0.5 # parametro de la red binomial
     min_residential = 0.9 # diagonal de la matriz de mobilidad mayor a este numero
     #vector de parametros para una zona
     param = np.zeros(5)
     param[0] = beta_h = 1./10. # 0.67
-    param[1] = gamma = 1./7.
+    param[1] = gamma = 1./7. #1./7.
     param[2] = beta_v = 1./10. #0.67  #5
     param[3] = mu_v = 1./10. # 1./8.
     #initial conditions para una zona
     y = np.zeros(5)
-    S = y[0] = 25000 #1500.
+    S = y[0] = 35000 #1500. 25000
     I = y[1] = 0.0
     R = y[2] = 0.0
-    V = y[3] = 15000.
+    V = y[3] = 15000. #15000
     W = y[4] = 0.#
 
     #P = MobilityNetwork()
     #P.barabsi_albert(n,m=2,min_residential=min_residential)
     #P.binomial(n,b,min_residential=min_residential)
     vectorModel = VectorBorne(n,params=param)
-    vectorModel.p.matrix[0,1]=0.1
-    vectorModel.p.matrix[1,0]=0.0
-    vectorModel.p.matrix[1,1]=1.0
-    vectorModel.p.matrix[0,0]=0.9
+    #vectorModel.p.matrix[0,1]=0.1
+    #vectorModel.p.matrix[1,0]=0.0
+    #vectorModel.p.matrix[1,1]=1.0
+    #vectorModel.p.matrix[0,0]=0.9
 
 
     sim = simulation(vectorModel)
@@ -144,9 +144,10 @@ def index():
     R_index_list = []
     R_sim_list = []
 
-    beta_range = np.arange(0.19,4.,0.01)
+    beta_range = np.arange(0.1,6.,0.1) #0.01
     for betav in beta_range :
         param[2]=betav
+        #param[0]=betav
         vectorModel.set_patches_params(param)
         sim.set_simulation_time(int(1000000 - 1000*betav))
         R_index_list.append(vectorModel.local_final_size(N,N,Nv).copy())

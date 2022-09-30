@@ -86,5 +86,38 @@ def index():
 
     plt.show()
 
+def interpretation_test():
+    n = 2 #numero de parches
+
+    #vector de parametros para una zona
+    param = np.zeros(2)
+    param[0] = beta = 0.67 # 0.67
+    param[1] = gamma = 1./7. #1./7.
+
+    #initial conditions para una zona
+    y = np.zeros(3)
+    S = y[0] = 35000 #1500. 25000
+    I = y[1] = 0.0
+    R = y[2] = 0.0
+
+    p11=0.9
+    p22=1.0
+
+    p12=1.-p11
+    p21=0.0
+    P=[[p11, p12],[p21,p22]]
+
+    sirModel = SIR(n,params=param,network=MMobilityNetwork(P))
+
+
+    sim = simulation(sirModel)
+    sim.set_initial_conditions_all_patches(y)
+    N = sim.node[:,0]
+    y[1]=y[1]+1. # Se agrega 1 infectado a las condiciones iniciales
+    sim.set_initial_conditions_patch(0,y) #Se establece esta condicion inicial en la zona 1
+    sim.run()
+    sim.plot_all()
+
+
 if (True):
     index()

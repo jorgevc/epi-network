@@ -26,7 +26,20 @@ import random as rand
 
 class MobilityNetwork:
 
-	def __init__(self,n=1):
+	def __init__(self,network=None,nodes=1):
+		self.adjacency_network
+		self.matrix
+		self.network
+
+		if (isinstance(network,np.ndarray)):
+			self.from_matrix(network)
+		elif(isinstance(network,int)):
+			self.disconnected_network(network)
+		else:
+			self.disconnected_network(nodes)
+
+
+	def disconnected_network(self):
 		self.adjacency_network = nx.empty_graph(n, create_using=nx.DiGraph)
 		for i in self.adjacency_network.nodes():
 			self.adjacency_network.add_edge(i,i)
@@ -123,7 +136,7 @@ class MobilityNetwork:
 		else:
 			Adj = adjacency_m
 
-		self.adjacency_network=nx.from_numpy_matrix(Adj)
+		self.adjacency_network=nx.from_numpy_array(Adj)
 		return self.weight_edges(min_residential)
 
 	def from_netowrkx(self,G):
@@ -135,3 +148,8 @@ class MobilityNetwork:
 	def draw_network(self):
 		nx.draw_networkx(self.network)
 		plt.show()
+
+	def from_matrix(self, M):
+		self.matrix = M.copy()
+		self.network = nx.from_numpy_array(M)
+		self.adjacency_network = nx.from_numpy_array(M)

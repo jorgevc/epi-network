@@ -202,3 +202,18 @@ class SIR(Model):
         N = S + I + R
 
         return self.local_final_size(N,N)
+
+    def final_size_condition(self, N, S_0):
+        P = N.dot(self.p.matrix)
+        b = np.multiply(self.p.matrix,self.beta/P).dot(self.p.matrix.T) # b_ij = sum_k (b_k*p_ik*p_jk)/P_k
+        A = np.multiply(b,1./self.gamma)
+
+        alpha = S_0*np.exp(-b.dot(N/self.gamma))
+
+        alpha_A = np.norm(alpha)*np.norm(A)
+        if (alpha_A < 1/np.exp(1)):
+            condition = True
+        else:
+            condition = False
+
+        return satisfy, alpha_A

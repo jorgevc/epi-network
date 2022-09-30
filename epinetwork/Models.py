@@ -134,3 +134,71 @@ class VectorBorne(Model):
         Nv = V + W
 
         return self.local_final_size(N,N,Nv)
+
+class SIR(Model):
+    def __init__(self,n=1, *, params = np.full((2),None) , network=MobilityNetwork, control = noControl()):
+     #Number of patches, parameter of a patch, mobility network, conctrol class
+        super().__init__(n=n,network=network,control=control)
+        self.number_of_variables = 3
+        self.final_size_presition = 0.01
+        self.final_size_max_iterations = 200
+        self.beta = np.full((self.number_of_patches),params[0])
+        self.gamma = np.full((self.number_of_patches),params[1])
+
+    def system(self,t,yv):
+        y = yv.reshape(self.number_of_patches,self.number_of_variables)
+
+        S = y[:,0]
+        I = y[:,1]
+        R = y[:,2]
+        N = S + I + R
+
+        F_I=I.dot(self.p.matrix)
+        W=N.dot(self.p.matrix)
+
+        dS = -S*self.p.matrix.dot(self.beta*F_I/W)
+        dI = S*self.p.matrix.dot(self.beta*F_I/W) - self.gamma*I
+        dR = self.gamma*I
+
+        return np.array([dS, dI, dR]).T.flatten()
+
+    def set_patches_params(self,params,No_patches=None):
+        if (No_patches == None) :
+            n = self.number_of_patches
+        else :
+            n = No_patches
+            if (self.number_of_patches != n):
+                self.number_of_patches = n
+                print("Caution : Number of patches has changed")
+
+        self.beta = np.full((n),params[0])
+        self.gamma = np.full((n),params[1])
+
+
+    def local_final_size(self,N,S):
+        P = N.dot(self.p.matrix)
+        b = np.multiply(self.p.matrix,self.beta/P)
+        def f(x):
+            tau = b.dot( (x/self.gamma).dot(self.p.matrix) )
+            return N - S*np.exp(-tau)
+
+        err=1000
+        it=0
+        R_infty = f(np.ones(len(N)))
+        while (err>self.final_size_presition and it < self.final_size_max_iterations):
+            R_infty_next = f(R_infty)
+            err = np.max(np.abs(R_infty_next - R_infty))
+            it += 1
+            R_infty = R_infty_next
+
+        return R_infty
+
+    def get_indices(self, y):
+
+        S = y[:,0]
+        I = y[:,1]
+        R = y[:,2]
+
+        N = S + I + R
+
+        return self.local_final_size(N,N)

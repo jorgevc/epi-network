@@ -100,15 +100,31 @@ def interpretation_test():
     I = y[1] = 0.0
     R = y[2] = 0.0
 
+
     p11=0.9
-    p22=1.0
-
     p12=1.-p11
+    p22=1.0
     p21=0.0
-    P=[[p11, p12],[p21,p22]]
+    P=np.array([[p11, p12],[p21,p22]])
 
-    sirModel = SIR(n,params=param,network=MMobilityNetwork(P))
+    sirModel = SIR(n,params=[[beta,gamma],[beta+0.3,gamma]])
+    # Calculate Analitical Local final size
+    R_infty = []
+    p_s = np.arange(0.,0.9,0.1)
+    N = np.array([S,S])
+    for p in p_s:
+        P[0,0]=1.-p
+        P[0,1]=p
+        sirModel.set_network(MobilityNetwork(P))
+        R_infty.append(sirModel.local_final_size(N,N))
 
+    R_infty = np.array(R_infty)
+    print(R_infty[:,0])
+    plt.plot(p_s,R_infty[:,0])
+    plt.plot(p_s,R_infty[:,1])
+    plt.show()
+
+    exit()
 
     sim = simulation(sirModel)
     sim.set_initial_conditions_all_patches(y)
@@ -120,4 +136,5 @@ def interpretation_test():
 
 
 if (True):
-    index()
+    #index()
+    interpretation_test()

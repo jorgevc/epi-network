@@ -27,9 +27,9 @@ import random as rand
 class MobilityNetwork:
 
 	def __init__(self,network=None,nodes=1):
-		self.adjacency_network
-		self.matrix
-		self.network
+		self.adjacency_network = None
+		self.matrix = None
+		self.network = None
 
 		if (isinstance(network,np.ndarray)):
 			self.from_matrix(network)
@@ -39,7 +39,7 @@ class MobilityNetwork:
 			self.disconnected_network(nodes)
 
 
-	def disconnected_network(self):
+	def disconnected_network(self,n=1):
 		self.adjacency_network = nx.empty_graph(n, create_using=nx.DiGraph)
 		for i in self.adjacency_network.nodes():
 			self.adjacency_network.add_edge(i,i)

@@ -30,7 +30,7 @@ class Model:
         self.number_of_patches = n
         self.set_network(network)
         self.set_protocol(control)
-        self.params = params
+        self.params = np.array(params)
 
     def system(self,t,yv):
         pass
@@ -49,11 +49,12 @@ class Model:
             self.p = network
             if ( network.network.number_of_nodes() > self.number_of_patches ):
                 self.number_of_patches = network.network.number_of_nodes()
+                print("Caution : Number of nodes has been changed due to size of network")
 
 class VectorBorne(Model):
     def __init__(self,n=1,*,params = np.full((4),None) , network=MobilityNetwork, control = noControl()):
          #Number of patches, parameter of a patch, mobility network, conctrol class
-        super().__init__(n=n,network=network,control=control)
+        super().__init__(n=n,params=params,network=network,control=control)
         self.number_of_variables = 5
         self.final_size_presition = 1.
         self.final_size_max_iterations = 200
@@ -138,12 +139,13 @@ class VectorBorne(Model):
 class SIR(Model):
     def __init__(self,n=1, *, params = np.full((2),None) , network=MobilityNetwork, control = noControl()):
      #Number of patches, parameter of a patch, mobility network, conctrol class
-        super().__init__(n=n,network=network,control=control)
+        super().__init__(n=n,params=params,network=network,control=control)
         self.number_of_variables = 3
         self.final_size_presition = 0.01
         self.final_size_max_iterations = 200
-        self.beta = np.full((self.number_of_patches),params[0])
-        self.gamma = np.full((self.number_of_patches),params[1])
+        self.beta = None
+        self.gamma = None
+        self.set_patches_params()
 
     def system(self,t,yv):
         y = yv.reshape(self.number_of_patches,self.number_of_variables)
@@ -162,7 +164,7 @@ class SIR(Model):
 
         return np.array([dS, dI, dR]).T.flatten()
 
-    def set_patches_params(self,params,No_patches=None):
+    def set_patches_params(self,params=None,No_patches=None):
         if (No_patches == None) :
             n = self.number_of_patches
         else :
@@ -170,9 +172,17 @@ class SIR(Model):
             if (self.number_of_patches != n):
                 self.number_of_patches = n
                 print("Caution : Number of patches has changed")
+        if (params!=None):
+            self.params=np.array(params)
 
-        self.beta = np.full((n),params[0])
-        self.gamma = np.full((n),params[1])
+        if (self.params.ndim == 1 and len(self.params)==2):
+            self.beta = np.full((n),self.params[0])
+            self.gamma = np.full((n),self.params[1])
+        elif (self.params.ndim == 2 and len(self.params)==n):
+            self.beta = self.params.T[0]
+            self.gamma = self.params.T[1]
+        else:
+            print("Error: params have not been given or params for each patch is not the same of number of patches")
 
 
     def local_final_size(self,N,S):

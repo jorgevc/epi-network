@@ -24,11 +24,11 @@ from .MobilityNetwork import MobilityNetwork
 from .Control_protocol import noControl, Protocol
 
 class Model:
-    def __init__(self,n=0, *, params = None , network=MobilityNetwork, control = noControl()):
+    def __init__(self,n=0, *, params = None , network = None, control = noControl()):
      #Number of patches, parameter of a patch, mobility network, conctrol class
         self.number_of_variables = 0
         self.number_of_patches = n
-        self.set_network(network)
+        self.p = MobilityNetwork(network)
         self.set_protocol(control)
         self.params = np.array(params)
 
@@ -46,9 +46,9 @@ class Model:
         if isinstance(network,type):
             self.p = network(self.number_of_patches)
         else:
-            self.p = network
-            if ( network.network.number_of_nodes() > self.number_of_patches ):
-                self.number_of_patches = network.network.number_of_nodes()
+            self.p = MobilityNetwork(network)
+            if ( self.p.network.number_of_nodes() > self.number_of_patches ):
+                self.number_of_patches = self.p.network.number_of_nodes()
                 print("Caution : Number of nodes has been changed due to size of network")
 
 class VectorBorne(Model):
@@ -220,10 +220,10 @@ class SIR(Model):
 
         alpha = S_0*np.exp(-b.dot(N/self.gamma))
 
-        alpha_A = np.norm(alpha)*np.norm(A)
+        alpha_A = np.linalg.norm(alpha)*np.linalg.norm(A)
         if (alpha_A < 1/np.exp(1)):
             condition = True
         else:
             condition = False
 
-        return satisfy, alpha_A
+        return condition, alpha_A

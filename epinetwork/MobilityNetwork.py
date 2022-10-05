@@ -35,6 +35,10 @@ class MobilityNetwork:
 			self.from_matrix(network)
 		elif(isinstance(network,int)):
 			self.disconnected_network(network)
+		elif(isinstance(network,MobilityNetwork)):
+			self.adjacency_network = network.adjacency_network.copy()
+			self.matrix = network.matrix.copy()
+			self.network = network.network.copy()
 		else:
 			self.disconnected_network(nodes)
 

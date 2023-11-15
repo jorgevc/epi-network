@@ -106,15 +106,15 @@ def detailed():
     plt.show()
 
 def index():
-    n = 1 #numero de parches
+    n = 4 #numero de parches
     b = 0.5 # parametro de la red binomial
     min_residential = 0.9 # diagonal de la matriz de mobilidad mayor a este numero
     #vector de parametros para una zona
     param = np.zeros(5)
-    param[0] = beta_h = 1./10. # 0.67
+    param[0] = beta_h = 0.0686 # (0.0146,0.2241)
     param[1] = gamma = 1./7. #1./7.
-    param[2] = beta_v = 1./10. #0.67  #5
-    param[3] = mu_v = 1./10. # 1./8.
+    param[2] = beta_v = 0.4307 # (0.1299, 1.6821)
+    param[3] = mu_v = 1./15. #
     #initial conditions para una zona
     y = np.zeros(5)
     S = y[0] = 35000 #1500. 25000
@@ -123,10 +123,10 @@ def index():
     V = y[3] = 15000. #15000
     W = y[4] = 0.#
 
-    #P = MobilityNetwork()
-    #P.barabsi_albert(n,m=2,min_residential=min_residential)
+    P = MobilityNetwork()
+    P.barabsi_albert(n,m=2,min_residential=min_residential)
     #P.binomial(n,b,min_residential=min_residential)
-    vectorModel = VectorBorne(n,params=param)
+    vectorModel = VectorBorne(n,params=param,network=P)
     #vectorModel.p.matrix[0,1]=0.1
     #vectorModel.p.matrix[1,0]=0.0
     #vectorModel.p.matrix[1,1]=1.0
@@ -141,40 +141,48 @@ def index():
     sim.set_initial_conditions_patch(0,y) #Se establece esta condicion inicial en la zona 1
      #How many "days" to simulate
 
-    R_index_list = []
+    R_index_inf_list = []
+    R_index_sup_list = []
     R_sim_list = []
 
-    beta_range = np.arange(0.1,6.,0.1) #0.01
+    beta_range = np.arange(0.13,1.6,0.1) #0.01
     for betav in beta_range :
+        print("calculando " , betav)
         param[2]=betav
         #param[0]=betav
         vectorModel.set_patches_params(param)
         sim.set_simulation_time(int(1000000 - 1000*betav))
-        R_index_list.append(vectorModel.local_final_size(N,N,Nv).copy())
+        R_index_inf_list.append(vectorModel.local_final_size_inf(N,N,Nv).copy())
+        R_index_sup_list.append(vectorModel.local_final_size_sup(N,N,Nv).copy())
         sim.run()
         R_sim_list.append(sim.evolution[:,2,-1].copy())
 
-    R_index = np.array(R_index_list)
+    R_inf = np.array(R_index_inf_list)
+    R_sup = np.array(R_index_sup_list)
     R_sim = np.array(R_sim_list)
+    fig, axs = plt.subplots(2,2)
+    ax = axs.flat
     for patch in range(vectorModel.number_of_patches):
-         fig, ax1 = plt.subplots()
-         #ax1.plot(beta_range,R_index[:,patch],label=r'$R_{approx}$')
-         #ax1.plot(beta_range,R_sim[:,patch], label=r'$R_{exact}$')
-         ax1.plot(mu_v/beta_range,R_index[:,patch],label=r'$R_{approx}$')
-         ax1.plot(mu_v/beta_range,R_sim[:,patch], label=r'$R_{exact}$')
-         ax1.legend()
-         ax1.set_xlabel(r'$\mu/\beta_v$')
-         ax1.set_ylabel(r'$R(\infty)$')
-         #ax1.set_title(r'$R(\infty)$ vs  $\mu/\beta$' )
-         fig, ax2 = plt.subplots()
-         R_sim_vec=R_sim[:,patch].flatten()
-         R_index_vec=R_index[:,patch].flatten()
-         Error =[ (R_in_index - R_in_sim)/R_in_sim if R_in_index >1. else 0. for R_in_index,R_in_sim in zip(R_index_vec,R_sim_vec)]
-         ax2.plot(mu_v/beta_range,Error)
+         ax[patch].plot(beta_range,R_inf[:,patch],label=r'$R_{inf}$',marker='*')
+         ax[patch].plot(beta_range,R_sup[:,patch],label=r'$R_{sup}$',marker='x')
+         ax[patch].plot(beta_range,R_sim[:,patch], label=r'$R_{exact}$')
+         #ax1.plot(mu_v/beta_range,R_inf[:,patch],label=r'$R_{inf}$')
+         #ax1.plot(mu_v/beta_range,R_inf[:,patch],label=r'$R_{inf}$')
          #ax1.plot(mu_v/beta_range,R_sim[:,patch], label=r'$R_{exact}$')
-         ax2.legend()
-         ax2.set_xlabel(r'$\mu/\beta_v$')
-         ax2.set_ylabel(r'$|\frac{R_{approx} - R_{exact}}{R_{exact}}|$')
+         ax[patch].legend()
+         ax[patch].set_xlabel(r'$\beta_v$')
+         ax[patch].set_ylabel(r'$R(\infty)$')
+         ax[patch].label_outer()
+         #ax1.set_title(r'$R(\infty)$ vs  $\mu/\beta$' )
+         #fig, ax2 = plt.subplots()
+         #R_sim_vec=R_sim[:,patch].flatten()
+         #R_index_vec=R_index[:,patch].flatten()
+         #Error =[ (R_in_index - R_in_sim)/R_in_sim if R_in_index >1. else 0. for R_in_index,R_in_sim in zip(R_index_vec,R_sim_vec)]
+         #ax2.plot(mu_v/beta_range,Error)
+         #ax1.plot(mu_v/beta_range,R_sim[:,patch], label=r'$R_{exact}$')
+         #ax2.legend()
+         #ax2.set_xlabel(r'$\mu/\beta_v$')
+         #ax2.set_ylabel(r'$|\frac{R_{approx} - R_{exact}}{R_{exact}}|$')
 
 
     plt.show()

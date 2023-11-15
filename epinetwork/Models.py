@@ -104,12 +104,31 @@ class VectorBorne(Model):
         self.mu_v = np.full((n),params[3])
 
 
-    def local_final_size(self,N,S,Nv):
+    def local_final_size_inf(self,N,S,Nv):
         P = N.dot(self.p.matrix)
-        b = self.p.matrix.dot(1./P)
-        a = (self.beta_h * self.beta_v * Nv * b)/(self.gamma * self.mu_v * P)
+        a = (self.beta_h * self.beta_v * Nv)/(self.gamma * self.mu_v * P*P)
+
         def f(x):
-            tau = a * x.dot(self.p.matrix)
+            tau = self.p.matrix.dot(a * x.dot(self.p.matrix))
+            return N - S*np.exp(-tau)
+
+        err=1000
+        it=0
+        R_infty = f(np.ones(len(N)))
+        while (err>self.final_size_presition or it < self.final_size_max_iterations):
+            R_infty_next = f(R_infty)
+            err = np.max(np.abs(R_infty_next - R_infty))
+            it += 1
+            R_infty = R_infty_next
+
+        return R_infty
+
+    def local_final_size_sup(self,N,S,Nv):
+        P = N.dot(self.p.matrix)
+        a = (self.beta_h * self.beta_v * Nv)/(self.gamma * (self.mu_v + self.beta_h) * P*P)
+
+        def f(x):
+            tau = self.p.matrix.dot(a * x.dot(self.p.matrix))
             return N - S*np.exp(-tau)
 
         err=1000
@@ -134,7 +153,7 @@ class VectorBorne(Model):
         N = S + I + R
         Nv = V + W
 
-        return self.local_final_size(N,N,Nv)
+        return self.local_final_size_sup(N,N,Nv)
 
 class SIR(Model):
     def __init__(self,n=1, *, params = np.full((2),None) , network=MobilityNetwork, control = noControl()):

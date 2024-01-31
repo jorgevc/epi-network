@@ -71,14 +71,14 @@ class simulation:
 	__slots__=('No_patches','parameters','patch_dimention','node','time','model','P','evolution',\
 	'control_protocol','simulation_time','total_infected','total_susceptible',\
 	'total_recovered','runned_times','susceptible_variable','infected_variable',\
-	'recovered_variable','evolution_totals')
+	'recovered_variable','evolution_totals','termination_events','t_events','y_events')
 	def __init__(self, model=Model()):
 		#parameteres
 		self.No_patches = model.number_of_patches #numero de parches
 		self.parameters = []
 		self.patch_dimention = model.number_of_variables #dimention of de system of a single patch
 		self.node = np.zeros((self.No_patches,self.patch_dimention))
-		self.time = []
+		self.time = None
 		self.model = model
 		self.P = None
 		self.evolution = None
@@ -92,6 +92,9 @@ class simulation:
 		self.infected_variable = 1
 		self.recovered_variable = 2
 		self.evolution_totals = None
+		self.termination_events = None
+		self.t_events=None
+		self.y_events=None
 
 	def reset(self):
 		self.__init__()
@@ -190,21 +193,39 @@ class simulation:
 	def set_simulation_time(self,time):
 		self.simulation_time=time
 
+	def set_early_stopping(self,eq=1):
+		def event(t,yv):
+			y = yv.reshape(self.model.number_of_patches,self.model.number_of_variables)
+			y_max=np.max(y[:,eq])-0.001
+			return y_max
+		
+		event.terminal = True
+		event.direction = -1.
+		self.termination_events=event
+
 	def run(self):
 		dim = self.patch_dimention
 		n = self.No_patches
-		self.time = np.linspace(0.0,self.simulation_time,self.simulation_time*10)
-
+		#self.time = np.linspace(500,self.simulation_time,int(self.simulation_time*1000))
+		events=self.termination_events
 		#system(t,yv):
 		system = self.model.system
 
 		initial = np.array(self.node).flatten()
 		#solution = odeint(system,initial,self.time)
 		#self.evolution = [[solution[:,node*dim+column] for column in range(dim)] for node in range(n)]
-		solution = np.array(solve_ivp(system, [min(self.time), max(self.time)], initial, t_eval=self.time).y)
+		sol=solve_ivp(system, [0., self.simulation_time], initial, t_eval=self.time, events=events, rtol = 1e-5)
+		solution = np.array(sol.y)
+		self.time = np.array(sol.t)
 		self.evolution = solution.reshape(n,dim,-1)
 		self.get_evolution_totals()
 		self.runned_times += 1
+		if (sol.t_events != None):
+			self.t_events=np.array(sol.t_events)
+			self.y_events=np.array(sol.y_events).reshape(n,dim)
+		else:
+			self.t_events=None
+			self.y_events=None
 		return self
 
 	def set_control_protocol(self,control_protocol):

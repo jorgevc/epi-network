@@ -56,8 +56,8 @@ class VectorBorne(Model):
          #Number of patches, parameter of a patch, mobility network, conctrol class
         super().__init__(n=n,params=params,network=network,control=control)
         self.number_of_variables = 5
-        self.final_size_presition = 1.
-        self.final_size_max_iterations = 200
+        self.final_size_presition = 0.0001
+        self.final_size_max_iterations = 2000000
         self.beta_h = np.full((self.number_of_patches),params[0])
         self.gamma = np.full((self.number_of_patches),params[1])
         self.beta_v = np.full((self.number_of_patches),params[2])
@@ -115,11 +115,15 @@ class VectorBorne(Model):
         err=1000
         it=0
         R_infty = f(np.ones(len(N)))
-        while (err>self.final_size_presition or it < self.final_size_max_iterations):
+        while (err>self.final_size_presition and it < self.final_size_max_iterations):
             R_infty_next = f(R_infty)
             err = np.max(np.abs(R_infty_next - R_infty))
             it += 1
             R_infty = R_infty_next
+
+        if it >= self.final_size_max_iterations:
+            print("Max iterations reached in index inf")
+            print("error: ", err)
 
         return R_infty
 
@@ -134,11 +138,15 @@ class VectorBorne(Model):
         err=1000
         it=0
         R_infty = f(np.ones(len(N)))
-        while (err>self.final_size_presition or it < self.final_size_max_iterations):
+        while (err>self.final_size_presition and it < self.final_size_max_iterations):
             R_infty_next = f(R_infty)
             err = np.max(np.abs(R_infty_next - R_infty))
             it += 1
             R_infty = R_infty_next
+
+        if it >= self.final_size_max_iterations:
+            print("Max iterations reached in index sup")
+            print("error: ", err)
 
         return R_infty
 

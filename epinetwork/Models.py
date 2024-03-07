@@ -38,7 +38,7 @@ class Model:
     def set_protocol(self,control):
         if isinstance(control,Protocol):
             self.control = control
-            self.control.model = self
+            self.control.set_model(self)
         else:
             self.control = control(model = self)
 
@@ -254,3 +254,94 @@ class SIR(Model):
             condition = False
 
         return condition, alpha_A
+
+
+class SEIR(Model):
+    def __init__(self,n=1, *, params = np.full((4),None) , network=MobilityNetwork, control = noControl()):
+     #Number of patches, parameters of a patch, mobility network, control class
+        super().__init__(n=n,params=params,network=network,control=control)
+        self.number_of_variables = 4
+        self.final_size_presition = 0.01
+        self.final_size_max_iterations = 200
+        self.beta = None
+        self.kappa = None
+        self.gamma = None
+        self.epsilon = None
+        self.set_patches_params()
+
+    def system(self,t,yv):
+        y = yv.reshape(self.number_of_patches,self.number_of_variables)
+
+        S = y[:,0]
+        E = y[:,1]
+        I = y[:,2]
+        R = y[:,3]
+        N = S + E + I + R
+
+        F_I=(I + self.epsilon*E).dot(self.p.matrix)
+        W=N.dot(self.p.matrix)
+
+        u = self.control.get_control(y,t)
+
+        beta_contr = self.beta*(1.-u[:,0])
+
+        dS = -S*self.p.matrix.dot(beta_contr*F_I/W)
+        dE = S*self.p.matrix.dot(beta_contr*F_I/W) - self.kappa*E
+        dI = self.kappa*E - self.gamma*I
+        dR = self.gamma*I
+
+        return np.array([dS, dE, dI, dR]).T.flatten()
+
+    def set_patches_params(self,params=None,No_patches=None):
+        if (No_patches == None) :
+            n = self.number_of_patches
+        else :
+            n = No_patches
+            if (self.number_of_patches != n):
+                self.number_of_patches = n
+                print("Caution : Number of patches has changed")
+        if (params!=None):
+            self.params=np.array(params)
+
+        if (self.params.ndim == 1 and len(self.params)==4):
+            self.beta = np.full((n),self.params[0])
+            self.kappa = np.full((n),self.params[1])
+            self.gamma = np.full((n),self.params[2])
+            self.epsilon = np.full((n),self.params[3])
+        elif (self.params.ndim == 2 and len(self.params)==n):
+            self.beta = self.params.T[0]
+            self.kappa = self.params.T[1]
+            self.gamma = self.params.T[2]
+            self.epsilon = self.params.T[3]
+        else:
+            print("Error: params have not been given or params for each patch is not the same of number of patches")
+
+
+    def local_final_size(self,N,S):
+        P = N.dot(self.p.matrix)
+        b = np.multiply(self.p.matrix,self.beta/P).dot(self.p.matrix.T)
+        def f(x):
+            tau = b.dot( (x*(self.epsilon/self.kappa) + 1./self.gamma) )
+            return N - S*np.exp(-tau)
+
+        err=1000
+        it=0
+        R_infty = f(np.ones(len(N)))
+        while (err>self.final_size_presition and it < self.final_size_max_iterations):
+            R_infty_next = f(R_infty)
+            err = np.max(np.abs(R_infty_next - R_infty))
+            it += 1
+            R_infty = R_infty_next
+
+        return R_infty
+
+    def get_indices(self, y):
+
+        S = y[:,0]
+        E = y[:,1]
+        I = y[:,2]
+        R = y[:,3]
+
+        N = S + E + I + R
+
+        return self.local_final_size(N,N)

@@ -71,6 +71,9 @@ class Protocol:
 		if(self.observation_interval == None):
 			self.observation_interval=dt
 
+	def set_model(self, model):
+		self.model = model
+
 
 class controlProtocol(Protocol):
 	def __init__(self,params,P_network):
@@ -166,8 +169,99 @@ class RandomControl(Protocol):
 		self.control[random_patch] = np.array([1.])
 
 class IndexBasedControl(Protocol):
-	def calculate_control(self):
+	def __init__(self,*,strategy='only_max',cost=None,update_interval=1.,model=None):
+		super().__init__(update_interval=update_interval,model=model)
+		self.cost = cost
+		self.cost_to_ctrl_K = 1. #When cost per node is 1 the ctrl is 0.5
+		if (self.model != None):
+			self.num_contrl_patches = model.number_of_patches
+		if strategy.lower() == 'only_max' :
+			self.calculate_control = self.calculate_only_max
+		elif strategy.lower() == 'equal_distributed' :
+			self.calculate_control = self.calculate_equal_distributed
+		elif strategy.lower() == 'cost_prop' :
+			self.calculate_control = self.calculate_cost_prop_distributed
+		elif strategy.lower() == 'control_prop' :
+			self.calculate_control = self.calculate_prop_control
+
+
+	def set_model(self, model):
+		self.model = model
+		self.num_contrl_patches = model.number_of_patches
+
+	def set_cost(self,cost):
+		self.cost = cost
+
+	def set_number_of_controlled_patches(self,num):
+		self.num_contrl_patches = num
+
+	def cost_to_ctrl(self,cost):
+		K=self.cost_to_ctrl_K
+		return cost/(K+cost)
+
+	def calculate_equal_distributed(self):
+		self.indices = self.model.get_indices(self.observation)
+		
+		n=self.num_contrl_patches
+		if n<len(self.indices):
+			ctrl_patches = np.argpartition(self.indices,-n)[-n:]
+		else:
+			ctrl_patches = np.arange(len(self.indices))
+
+		self.control = np.zeros((self.model.number_of_patches,1))
+		self.control[ctrl_patches,0]=self.cost_to_ctrl(self.cost/n)
+
+	def calculate_cost_prop_distributed(self):
+		self.indices = self.model.get_indices(self.observation)
+		n=self.num_contrl_patches
+		if n<len(self.indices):
+			ctrl_patches = np.argpartition(self.indices,-n)[-n:]
+		else:
+			ctrl_patches = np.arange(len(self.indices))
+
+		cost_distribution = (self.indices[ctrl_patches]*self.cost)/np.sum(self.indices[ctrl_patches])
+		self.control = np.zeros((self.model.number_of_patches,1))
+		self.control[ctrl_patches,0]=self.cost_to_ctrl(cost_distribution)
+
+	def calculate_prop_control(self):
+		epochs = 100
+		learning_rate = 0.01
+		max_error = 0.01
+		self.indices = self.model.get_indices(self.observation)
+		n=self.num_contrl_patches
+		if n<len(self.indices):
+			ctrl_patches = np.argpartition(self.indices,-n)[-n:]
+		else:
+			ctrl_patches = np.arange(len(self.indices))
+
+		def C(sigma, ctrl_patches):
+			S=self.indices[ctrl_patches]*sigma #TODO Avoid S gd 1
+			K=self.cost_to_ctrl_K
+			return K*np.sum(S/(1.-S))
+		
+		it=0
+		sigma=0.
+		max_index = np.max(self.indices[ctrl_patches])
+		learning_rate = learning_rate/max_index
+		err = C(sigma,ctrl_patches) - self.cost
+		while (abs(err)>max_error and it < epochs):
+			sigma=sigma - learning_rate*err
+			sigma = 0.95/max_index if sigma*max_index > 0.95 else sigma
+			err = C(sigma,ctrl_patches) - self.cost
+			it+=1
+
+		print("Cost error = ", C(sigma,ctrl_patches)-self.cost)
+		
+		self.control = np.zeros((self.model.number_of_patches,1))
+		self.control[ctrl_patches,0]=sigma*self.indices[ctrl_patches]
+
+
+	def calculate_only_max(self):
 		self.indices = self.model.get_indices(self.observation)
 		patch_index = np.argmax(self.indices)
 		self.control = np.zeros((self.model.number_of_patches,1))
-		self.control[patch_index] = np.array([1.])
+		self.control[patch_index,0] = self.cost_to_ctrl(self.cost)
+
+
+
+

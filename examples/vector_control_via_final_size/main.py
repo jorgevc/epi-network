@@ -440,7 +440,7 @@ def comparison():
         #P.binomial(n,b,min_residential)
         #P.newman_watts_strogatz(n,k,p,min_residential)
         sim.model.set_protocol(index_control)
-        IndexControledEnsemble.add_simulation(sim) #when a simulation is addet to an ensemble it makes a copy, thus we car resuse the object simulation
+        IndexControledEnsemble.add_simulation(sim) #when a simulation is added to an ensemble it makes a copy, thus we car resuse the object simulation
         sim.model.set_protocol(rand_control)
         RandControledEnsemble.add_simulation(sim)
         sim.model.set_protocol(no_control)

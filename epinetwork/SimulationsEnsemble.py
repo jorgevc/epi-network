@@ -21,6 +21,8 @@ class simulationsEnsemble:
 
 	def add_simulation(self, simulation):
 		self.simulations.append(copy.deepcopy(simulation))
+		if simulation.time == None:
+			self.simulations[-1].time = np.arange(0.,simulation.simulation_time,1.)
 		self.number_of_simulations += 1
 
 	def run_all_simulations(self):
@@ -29,9 +31,13 @@ class simulationsEnsemble:
 		self.average_infected()
 		self.average_recovered()
 
-	def get_evolution_average(self):
-		evols = np.array([x.get_evolution_totals() for x in self.simulations])
-		self.evolution_average = np.sum(evols,axis=0)
+	def get_evolution_average(self,mode="relative"):
+		if mode=="relative":
+			evols_list = [x.get_evolution_totals()/np.sum(x.evolution_totals[:,0]) for x in self.simulations]
+		else:
+			evols_list = [x.get_evolution_totals() for x in self.simulations]
+		evols = np.array(evols_list)
+		self.evolution_average = np.sum(evols,axis=0)/len(evols_list)
 		return self.evolution_average, self.simulations[0].time
 
 	def average_infected(self):

@@ -31,18 +31,20 @@ class Protocol:
 		self.last_control_time = None
 		self.control_interval = update_interval
 		self.model = model
+		self.initial_time = 0.
 
 	def get_control(self,y,t):
-		if(self.observation_time(t)):
-			self.observation=y.copy()
-			self.last_observation_time = t
-		if(self.last_control_time is None):
-			self.calculate_control()
-			self.last_control_time = t
-		elif( self.control_interval is not None):
-			if(t-self.last_control_time > self.control_interval):
+		if (t>=self.initial_time):
+			if(self.observation_time(t)):
+				self.observation=y.copy()
+				self.last_observation_time = t
+			if(self.last_control_time is None):
 				self.calculate_control()
 				self.last_control_time = t
+			elif( self.control_interval is not None):
+				if(t-self.last_control_time > self.control_interval):
+					self.calculate_control()
+					self.last_control_time = t
 		return self.control
 
 	def calculate_control(self):
@@ -58,8 +60,10 @@ class Protocol:
 		elif ((self.observation_interval is not None)):
 			if ((t - self.last_observation_time) > self.observation_interval):
 				return True
+			else:
+				return False
 		else:
-			return True
+			return True #If observation_interval not specified we observe
 
 	def set_observation_interval(self, dt):
 		self.observation_interval = dt
@@ -239,18 +243,27 @@ class IndexBasedControl(Protocol):
 			K=self.cost_to_ctrl_K
 			return K*np.sum(S/(1.-S))
 		
+		def dC(sigma, ctrl_patches):
+			S=self.indices[ctrl_patches]*sigma #TODO Avoid S gd 1
+			K=self.cost_to_ctrl_K
+			return K*np.sum(self.indices[ctrl_patches]/((1.-S)*(1.-S)))
+		
 		it=0
 		sigma=0.
 		max_index = np.max(self.indices[ctrl_patches])
-		learning_rate = learning_rate/max_index
+		learning_rate = 0.5/dC(sigma,ctrl_patches)
 		err = C(sigma,ctrl_patches) - self.cost
 		while (abs(err)>max_error and it < epochs):
 			sigma=sigma - learning_rate*err
 			sigma = 0.95/max_index if sigma*max_index > 0.95 else sigma
+			sigma = abs(sigma) if sigma < 0 else sigma
 			err = C(sigma,ctrl_patches) - self.cost
+			learning_rate = 0.5/dC(sigma,ctrl_patches)
 			it+=1
 
-		print("Cost error = ", C(sigma,ctrl_patches)-self.cost)
+		if it == epochs:
+			print("Warnning: max iterations reached beforde precition in finding control distribution.")
+			print("Cost error = ", C(sigma,ctrl_patches)-self.cost)
 		
 		self.control = np.zeros((self.model.number_of_patches,1))
 		self.control[ctrl_patches,0]=sigma*self.indices[ctrl_patches]
